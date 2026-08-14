@@ -1,0 +1,94 @@
+spring:
+  application:
+    name: lang-assessment-backend
+
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:lang_assessment}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:password123}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        use_sql_comments: true
+    show-sql: false
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+  web:
+    cors:
+      allowed-origins: "http://localhost:3000,http://localhost:8080"
+      allowed-methods: "GET,POST,PUT,DELETE,PATCH,OPTIONS"
+      allowed-headers: "*"
+      allow-credentials: true
+      max-age: 3600
+
+jwt:
+  secret: ${JWT_SECRET:your-secret-key-change-in-production-min-32-chars-required}
+  expiration: ${JWT_EXPIRATION:86400000}
+
+minio:
+  url: ${MINIO_URL:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin123}
+  bucket:
+    assessments: ${MINIO_BUCKET_ASSESSMENTS:assessments}
+    submissions: ${MINIO_BUCKET_SUBMISSIONS:submissions}
+
+evaluation:
+  service-url: ${EVALUATION_SERVICE_URL:http://localhost:5000}
+  timeout-seconds: 30
+
+ai:
+  gemini-api-key: ${GEMINI_API_KEY:}
+  default-model: gemini-pro
+
+logging:
+  level:
+    root: ${LOG_LEVEL:INFO}
+    com.langassessment: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/lang-assessment.log
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+  compression:
+    enabled: true
+    min-response-size: 1024
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    export:
+      simple:
+        enabled: true
