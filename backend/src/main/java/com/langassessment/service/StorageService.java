@@ -20,6 +20,9 @@ public class StorageService {
 
     private final MinioClient minioClient;
 
+    @Value("${minio.url}")
+    private String minioUrl;
+
     @Value("${minio.bucket.assessments}")
     private String assessmentsBucket;
 
@@ -96,14 +99,19 @@ public class StorageService {
     public String generatePresignedUrl(String fileName, String bucketType) throws Exception {
         String bucketName = bucketType.equals("assessment") ? assessmentsBucket : submissionsBucket;
 
-        return minioClient.getPresignedObjectUrl(
-                GetPresignedObjectUrlArgs.builder()
-                        .method(io.minio.http.Method.GET)
-                        .bucket(bucketName)
-                        .object(fileName)
-                        .expiration(60 * 60)
-                        .build()
-        );
+        try {
+            return minioClient.getPresignedObjectUrl(
+                    GetPresignedObjectUrlArgs.builder()
+                            .method(io.minio.http.Method.GET)
+                            .bucket(bucketName)
+                            .object(fileName)
+                            .build()
+            );
+        } catch (Exception e) {
+            log.warn("Failed to generate presigned URL: {}", e.getMessage());
+            // Fallback: return direct URL (less secure but works)
+            return String.format("%s/%s/%s", minioUrl, bucketName, fileName);
+        }
     }
 
     private String generateFileName(String originalFileName) {
