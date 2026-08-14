@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS languages (
 -- CEFR Levels table
 CREATE TABLE IF NOT EXISTS cefr_levels (
     id SERIAL PRIMARY KEY,
-    level VARCHAR(5) NOT NULL CHECK (level IN ('A1', 'A2', 'B1', 'B2', 'C1', 'C2')),
+    level VARCHAR(5) NOT NULL UNIQUE CHECK (level IN ('A1', 'A2', 'B1', 'B2', 'C1', 'C2')),
     description TEXT,
     score_range_min INT,
     score_range_max INT
