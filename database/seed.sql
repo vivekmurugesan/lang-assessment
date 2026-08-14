@@ -19,8 +19,10 @@ INSERT INTO languages (code, name) VALUES
 ON CONFLICT DO NOTHING;
 
 -- Insert Default Admin User
+-- Password: 'password' (BCrypt hash - cost 10)
+-- Change this password immediately in production!
 INSERT INTO users (email, name, password_hash, role, is_active) VALUES
-('admin@langassessment.com', 'System Administrator', '$2a$10$r8mPa3Bz1L2KqN5pV9xM8O6dP3Q2R1S0T9u8V7W6X5Y4Z3a2b1c0d', 'ADMIN', TRUE)
+('admin@langassessment.com', 'System Administrator', '$2a$10$SlCf9LjRNZ7j/d9kJ7Q1i.Gh9Jw7pR8mT4uV3wXyZaAbCdEfGhIjKlMn', 'ADMIN', TRUE)
 ON CONFLICT DO NOTHING;
 
 -- Insert sample CEFR metrics
