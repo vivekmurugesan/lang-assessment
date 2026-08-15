@@ -177,7 +177,7 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
   const moduleTypes = [
     'LISTENING',
     'READING',
-    'WRITTEN_INTERACTION',
+    'SPOKEN_INTERACTION',
     'SPOKEN_PRODUCTION',
     'WRITING',
   ];
