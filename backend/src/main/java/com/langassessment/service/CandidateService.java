@@ -29,6 +29,7 @@ public class CandidateService {
     private final AssessmentRepository assessmentRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     @Transactional
     public AssessmentCandidate addCandidate(Integer assessmentId, String email, String name) {
@@ -57,7 +58,15 @@ public class CandidateService {
                 .status(AssessmentCandidate.CandidateStatus.INVITED)
                 .build();
 
-        return assessmentCandidateRepository.save(candidate);
+        AssessmentCandidate savedCandidate = assessmentCandidateRepository.save(candidate);
+
+        try {
+            emailService.sendCandidateInvitation(email, name, assessment.getTitle(), secureLink);
+        } catch (Exception e) {
+            log.warn("Email sending failed for candidate {}, but candidate was created: {}", email, e.getMessage());
+        }
+
+        return savedCandidate;
     }
 
     @Transactional(readOnly = true)
@@ -74,6 +83,18 @@ public class CandidateService {
         AssessmentCandidate candidate = assessmentCandidateRepository.findBySecureLink(secureLink)
                 .orElseThrow(() -> new RuntimeException("Candidate not found"));
         return convertToDTO(candidate);
+    }
+
+    @Transactional(readOnly = true)
+    public AssessmentCandidate getCandidateBySecureLinkEntity(String secureLink) {
+        return assessmentCandidateRepository.findBySecureLink(secureLink)
+                .orElseThrow(() -> new RuntimeException("Candidate not found"));
+    }
+
+    @Transactional(readOnly = true)
+    public List<CandidateDTO> getCandidateAssessments(User user) {
+        List<AssessmentCandidate> candidates = assessmentCandidateRepository.findByUser(user);
+        return candidates.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     @Transactional
@@ -100,8 +121,21 @@ public class CandidateService {
     public void resendInvitation(Integer candidateId) {
         AssessmentCandidate candidate = assessmentCandidateRepository.findById(candidateId)
                 .orElseThrow(() -> new RuntimeException("Candidate not found"));
-        candidate.setSecureLink(UUID.randomUUID().toString());
+        String newSecureLink = UUID.randomUUID().toString();
+        candidate.setSecureLink(newSecureLink);
         assessmentCandidateRepository.save(candidate);
+
+        try {
+            emailService.sendCandidateInvitation(
+                    candidate.getUser().getEmail(),
+                    candidate.getUser().getName(),
+                    candidate.getAssessment().getTitle(),
+                    newSecureLink
+            );
+        } catch (Exception e) {
+            log.warn("Email resend failed for candidate {}, but secure link was updated: {}", candidateId, e.getMessage());
+        }
+
         log.info("Invitation resent for candidate: {}", candidateId);
     }
 

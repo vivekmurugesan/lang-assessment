@@ -26,4 +26,10 @@ public interface QuestionRepository extends JpaRepository<Question, Integer> {
     );
 
     List<Question> findByLanguageAndStatus(Language language, Question.QuestionStatus status);
+
+    List<Question> findByLanguageAndModuleTypeAndStatus(
+            Language language,
+            Question.ModuleType moduleType,
+            Question.QuestionStatus status
+    );
 }

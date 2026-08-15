@@ -20,4 +20,6 @@ public interface AssessmentCandidateRepository extends JpaRepository<AssessmentC
     Optional<AssessmentCandidate> findBySecureLink(String secureLink);
 
     Optional<AssessmentCandidate> findByAssessmentAndUser(Assessment assessment, User user);
+
+    List<AssessmentCandidate> findByUser(User user);
 }
