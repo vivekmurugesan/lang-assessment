@@ -26,13 +26,13 @@ public class AssessmentModule {
     private Assessment assessment;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "module_type", nullable = false)
+    @Column(name = "module_type", nullable = false, length = 50)
     private ModuleType moduleType;
 
     @Column(name = "num_questions", nullable = false)
     private Integer numQuestions;
 
-    @Column(name = "difficulty_level")
+    @Column(name = "difficulty_level", length = 50)
     private String difficultyLevel;
 
     @Column(name = "is_enabled", nullable = false)
