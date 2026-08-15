@@ -153,6 +153,32 @@ public class AssessmentCandidateAPIController {
         }
     }
 
+    @GetMapping("/submissions/{secureLink}/results")
+    public ResponseEntity<AuthDTO.ApiResponse<AssessmentSubmissionDTO>> getSubmissionResults(
+            @PathVariable String secureLink) {
+        try {
+            AssessmentCandidate candidate = candidateService.getCandidateBySecureLinkEntity(secureLink);
+            var submission = submissionService.getSubmissionByCandidate(candidate.getId());
+
+            AssessmentSubmissionDTO dto = AssessmentSubmissionDTO.builder()
+                    .id(submission.getId())
+                    .assessmentCandidateId(submission.getAssessmentCandidate().getId())
+                    .status(submission.getStatus().toString())
+                    .totalScore(submission.getTotalScore())
+                    .cefrLevel(submission.getCefrLevel())
+                    .evaluatorNotes(submission.getEvaluatorNotes())
+                    .submittedAt(submission.getSubmittedAt())
+                    .evaluatedAt(submission.getEvaluatedAt())
+                    .build();
+
+            return ResponseEntity.ok(new AuthDTO.ApiResponse<>(true, "Results retrieved", dto));
+        } catch (Exception e) {
+            log.error("Failed to retrieve results: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(new AuthDTO.ApiResponse<>(false, e.getMessage()));
+        }
+    }
+
     private QuestionWithOptionsDTO convertToQuestionDTO(Question question, String moduleType) {
         return QuestionWithOptionsDTO.builder()
                 .id(question.getId())
