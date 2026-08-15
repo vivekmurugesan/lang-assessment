@@ -24,6 +24,8 @@ public class AssessmentModuleController {
             @PathVariable Integer assessmentId,
             @RequestBody AssessmentModuleDTO dto) {
         try {
+            log.info("Creating module for assessment: {} with data: moduleType={}, numQuestions={}, difficultyLevel={}, isEnabled={}",
+                    assessmentId, dto.getModuleType(), dto.getNumQuestions(), dto.getDifficultyLevel(), dto.getIsEnabled());
             AssessmentModule module = assessmentModuleService.createAssessmentModule(assessmentId, dto);
             AssessmentModuleDTO responseDto = AssessmentModuleDTO.builder()
                     .id(module.getId())
@@ -34,11 +36,16 @@ public class AssessmentModuleController {
                     .isEnabled(module.getIsEnabled())
                     .createdAt(module.getCreatedAt())
                     .build();
+            log.info("Module created successfully: {}", module.getId());
             return ResponseEntity.ok(new AuthDTO.ApiResponse<>(true, "Module created", responseDto));
-        } catch (Exception e) {
-            log.error("Failed to create module: {}", e.getMessage());
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid module type or other validation error: {}", e.getMessage(), e);
             return ResponseEntity.badRequest()
-                    .body(new AuthDTO.ApiResponse<>(false, e.getMessage()));
+                    .body(new AuthDTO.ApiResponse<>(false, "Invalid module data: " + e.getMessage()));
+        } catch (Exception e) {
+            log.error("Failed to create module: {}", e.getMessage(), e);
+            return ResponseEntity.badRequest()
+                    .body(new AuthDTO.ApiResponse<>(false, "Failed to create module: " + e.getMessage()));
         }
     }
 
