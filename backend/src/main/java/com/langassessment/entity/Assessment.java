@@ -27,7 +27,7 @@ public class Assessment {
     @JoinColumn(name = "admin_id", nullable = false)
     private User admin;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "language_id", nullable = false)
     private Language language;
 
