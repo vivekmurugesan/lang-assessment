@@ -96,6 +96,15 @@ public class CandidateService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
+    public void resendInvitation(Integer candidateId) {
+        AssessmentCandidate candidate = assessmentCandidateRepository.findById(candidateId)
+                .orElseThrow(() -> new RuntimeException("Candidate not found"));
+        candidate.setSecureLink(UUID.randomUUID().toString());
+        assessmentCandidateRepository.save(candidate);
+        log.info("Invitation resent for candidate: {}", candidateId);
+    }
+
     private CandidateDTO convertToDTO(AssessmentCandidate candidate) {
         return CandidateDTO.builder()
                 .id(candidate.getId())
