@@ -2,6 +2,7 @@ package com.langassessment.repository;
 
 import com.langassessment.entity.Assessment;
 import com.langassessment.entity.AssessmentCandidate;
+import com.langassessment.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,5 +19,5 @@ public interface AssessmentCandidateRepository extends JpaRepository<AssessmentC
 
     Optional<AssessmentCandidate> findBySecureLink(String secureLink);
 
-    Optional<AssessmentCandidate> findByAssessmentAndUser(Assessment assessment, Integer userId);
+    Optional<AssessmentCandidate> findByAssessmentAndUser(Assessment assessment, User user);
 }
