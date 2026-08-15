@@ -22,7 +22,7 @@ ON CONFLICT DO NOTHING;
 -- Password: 'password' (BCrypt hash - cost 10)
 -- Change this password immediately in production!
 INSERT INTO users (email, name, password_hash, role, is_active) VALUES
-('admin@langassessment.com', 'System Administrator', '$2a$10$SlCf9LjRNZ7j/d9kJ7Q1i.Gh9Jw7pR8mT4uV3wXyZaAbCdEfGhIjKlMn', 'ADMIN', TRUE)
+('admin@langassessment.com', 'System Administrator', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcg7b3XeKeUxWdeS86E36P4/KLm', 'ADMIN', TRUE)
 ON CONFLICT DO NOTHING;
 
 -- Insert sample CEFR metrics

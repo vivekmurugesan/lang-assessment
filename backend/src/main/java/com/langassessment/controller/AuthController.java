@@ -19,10 +19,11 @@ public class AuthController {
     public ResponseEntity<AuthDTO.ApiResponse<AuthDTO.LoginResponse>> login(
             @RequestBody AuthDTO.LoginRequest request) {
         try {
+            log.info("Login attempt for email: {}", request.getEmail());
             AuthDTO.LoginResponse response = userService.authenticate(request);
             return ResponseEntity.ok(new AuthDTO.ApiResponse<>(true, "Login successful", response));
         } catch (Exception e) {
-            log.error("Login failed: {}", e.getMessage());
+            log.error("Login failed for email: {}", request.getEmail(), e);
             return ResponseEntity.badRequest()
                     .body(new AuthDTO.ApiResponse<>(false, "Invalid email or password"));
         }

@@ -3,7 +3,7 @@
 -- This hash is for the password: "password"
 
 UPDATE users
-SET password_hash = '$2a$10$SlCf9LjRNZ7j/d9kJ7Q1i.Gh9Jw7pR8mT4uV3wXyZaAbCdEfGhIjKlMn'
+SET password_hash = '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcg7b3XeKeUxWdeS86E36P4/KLm'
 WHERE email = 'admin@langassessment.com';
 
 -- Verify the update
