@@ -2,6 +2,7 @@ package com.langassessment.controller;
 
 import com.langassessment.dto.AuthDTO;
 import com.langassessment.service.UserService;
+import com.langassessment.service.CandidateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final UserService userService;
+    private final CandidateService candidateService;
 
     @PostMapping("/login")
     public ResponseEntity<AuthDTO.ApiResponse<AuthDTO.LoginResponse>> login(
@@ -26,6 +28,20 @@ public class AuthController {
             log.error("Login failed for email: {}", request.getEmail(), e);
             return ResponseEntity.badRequest()
                     .body(new AuthDTO.ApiResponse<>(false, "Invalid email or password"));
+        }
+    }
+
+    @PostMapping("/candidate-login")
+    public ResponseEntity<AuthDTO.ApiResponse<AuthDTO.LoginResponse>> candidateLogin(
+            @RequestBody AuthDTO.CandidateLoginRequest request) {
+        try {
+            log.info("Candidate login attempt for secure link: {}", request.getSecureLink());
+            AuthDTO.LoginResponse response = userService.authenticateCandidate(request.getSecureLink(), request.getPassword());
+            return ResponseEntity.ok(new AuthDTO.ApiResponse<>(true, "Login successful", response));
+        } catch (Exception e) {
+            log.error("Candidate login failed: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(new AuthDTO.ApiResponse<>(false, "Invalid secure link or password"));
         }
     }
 

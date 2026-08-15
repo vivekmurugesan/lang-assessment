@@ -2,7 +2,9 @@ package com.langassessment.service;
 
 import com.langassessment.dto.AuthDTO;
 import com.langassessment.entity.User;
+import com.langassessment.entity.AssessmentCandidate;
 import com.langassessment.repository.UserRepository;
+import com.langassessment.repository.AssessmentCandidateRepository;
 import com.langassessment.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +20,7 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final AssessmentCandidateRepository assessmentCandidateRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
 
@@ -78,5 +81,32 @@ public class UserService {
     public User getUserById(Integer id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    @Transactional
+    public AuthDTO.LoginResponse authenticateCandidate(String secureLink, String password) {
+        log.info("Authenticating candidate with secure link: {}", secureLink);
+
+        AssessmentCandidate candidate = assessmentCandidateRepository.findBySecureLink(secureLink)
+                .orElseThrow(() -> new RuntimeException("Invalid secure link"));
+
+        if (!passwordEncoder.matches(password, candidate.getTempPassword())) {
+            log.warn("Password mismatch for candidate with secure link: {}", secureLink);
+            throw new RuntimeException("Invalid password");
+        }
+
+        User user = candidate.getUser();
+        log.info("Candidate authentication successful: {}", user.getEmail());
+
+        String token = jwtTokenProvider.generateToken(user.getEmail(), user.getRole().name());
+
+        return AuthDTO.LoginResponse.builder()
+                .token(token)
+                .userId(user.getId())
+                .email(user.getEmail())
+                .name(user.getName())
+                .role(user.getRole().name())
+                .expiresIn(jwtTokenProvider.getExpirationTime())
+                .build();
     }
 }
