@@ -28,18 +28,23 @@ public class UserService {
 
     @Transactional
     public AuthDTO.LoginResponse authenticate(AuthDTO.LoginRequest request) {
+        log.info("Authenticating user: {}", request.getEmail());
         Optional<User> user = userRepository.findByEmailAndIsActive(request.getEmail(), true);
 
         if (user.isEmpty()) {
+            log.warn("User not found or inactive: {}", request.getEmail());
             throw new RuntimeException("Invalid email or password");
         }
 
         User foundUser = user.get();
+        log.debug("User found. Checking password...");
 
         if (!passwordEncoder.matches(request.getPassword(), foundUser.getPasswordHash())) {
+            log.warn("Password mismatch for user: {}", request.getEmail());
             throw new RuntimeException("Invalid email or password");
         }
 
+        log.info("Authentication successful for user: {}", request.getEmail());
         String token = jwtTokenProvider.generateToken(foundUser.getEmail(), foundUser.getRole().name());
 
         return AuthDTO.LoginResponse.builder()
