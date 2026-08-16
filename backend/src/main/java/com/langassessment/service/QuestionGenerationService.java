@@ -281,17 +281,27 @@ public class QuestionGenerationService {
                         .generatedBy("GEMINI_API")
                         .build();
 
+                // Store question options in MinIO
                 if (q.containsKey("options")) {
                     List<String> options = (List<String>) q.get("options");
-                    question.setQuestionOptions(String.join(",", options));
+                    String optionsJson = mapper.writeValueAsString(options);
+                    String optionsUri = uploadLargeContentToMinIO(optionsJson, "question-options");
+                    if (optionsUri != null) {
+                        question.setQuestionOptionsUri(optionsUri);
+                    }
                 }
 
                 if (q.containsKey("correctAnswer")) {
                     question.setCorrectAnswer((String) q.get("correctAnswer"));
                 }
 
+                // Store explanation in MinIO
                 if (q.containsKey("explanation")) {
-                    question.setExplanation((String) q.get("explanation"));
+                    String explanation = (String) q.get("explanation");
+                    String explanationUri = uploadLargeContentToMinIO(explanation, "question-explanation");
+                    if (explanationUri != null) {
+                        question.setExplanationUri(explanationUri);
+                    }
                 }
 
                 questions.add(question);
@@ -301,5 +311,26 @@ public class QuestionGenerationService {
         }
 
         return questions;
+    }
+
+    private String uploadLargeContentToMinIO(String content, String contentType) {
+        try {
+            String objectName = String.format("questions/%s/%d-%s.json",
+                    contentType,
+                    System.currentTimeMillis(),
+                    java.util.UUID.randomUUID().toString().substring(0, 8));
+
+            byte[] contentBytes = content.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            java.io.InputStream inputStream = new java.io.ByteArrayInputStream(contentBytes);
+
+            minIOService.uploadFile("questions", objectName, inputStream, contentBytes.length);
+            String uri = minIOService.getObjectUrl("questions", objectName);
+
+            log.info("Uploaded {} content to MinIO: {}", contentType, uri);
+            return uri;
+        } catch (Exception e) {
+            log.error("Failed to upload {} content to MinIO: {}", contentType, e.getMessage(), e);
+            return null;
+        }
     }
 }

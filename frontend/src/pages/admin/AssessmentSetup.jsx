@@ -271,9 +271,10 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
       const progressInterval = setInterval(() => {
         setProgressModal((prev) => {
           if (prev.progress < 80) {
+            const newProgress = Math.min(80, prev.progress + Math.random() * 20);
             return {
               ...prev,
-              progress: prev.progress + Math.random() * 20,
+              progress: newProgress,
               message: 'Calling Gemini API to generate questions...',
             };
           }
