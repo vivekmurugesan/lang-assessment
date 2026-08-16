@@ -109,7 +109,7 @@ public class AssessmentCandidateAPIController {
 
             List<QuestionWithOptionsDTO> allQuestions = modules.stream()
                     .flatMap(module -> {
-                        List<Question> questions = questionService.getQuestionsByModuleAndLanguage(
+                        List<Question> questions = questionService.getActiveQuestionsByModuleAndLanguage(
                                 assessment.getLanguage().getId(),
                                 module.getModuleType().toString(),
                                 module.getNumQuestions()
