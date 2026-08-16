@@ -185,6 +185,8 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
   const [modules, setModules] = useState([]);
   const [showModuleConfig, setShowModuleConfig] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [showCatalogSelection, setShowCatalogSelection] = useState(false);
+  const [catalogSelecting, setCatalogSelecting] = useState(false);
   const [progressModal, setProgressModal] = useState({
     isOpen: false,
     status: 'generating', // 'generating', 'complete', 'error'
@@ -277,6 +279,26 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
       });
 
       setGenerating(false);
+    }
+  };
+
+  const handleSelectFromCatalog = async (moduleCounts) => {
+    setCatalogSelecting(true);
+    setShowCatalogSelection(false);
+
+    try {
+      await api.post(
+        `/admin/questions/assessments/${assessment.id}/select-questions`,
+        moduleCounts
+      );
+
+      toast.success('Questions selected from catalog successfully!');
+      setCatalogSelecting(false);
+    } catch (error) {
+      console.error('Failed to select questions from catalog:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred';
+      toast.error(errorMessage);
+      setCatalogSelecting(false);
     }
   };
 
@@ -373,6 +395,13 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
               <FiZap size={14} /> {generating ? 'Generating...' : 'Generate Questions'}
             </button>
             <button
+              onClick={() => setShowCatalogSelection(true)}
+              disabled={catalogSelecting || modules.length === 0}
+              className="btn btn-sm bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-400 flex items-center gap-1"
+            >
+              <FiPlus size={14} /> {catalogSelecting ? 'Selecting...' : 'Select from Catalog'}
+            </button>
+            <button
               onClick={() => navigate(`/admin/questions/review/${assessment.id}`)}
               className="btn btn-secondary btn-sm flex items-center gap-1"
             >
@@ -385,10 +414,87 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
               <FiTrash2 size={14} /> Delete Assessment
             </button>
           </div>
+
+          {showCatalogSelection && (
+            <CatalogSelectionModal
+              modules={modules}
+              onConfirm={handleSelectFromCatalog}
+              onClose={() => setShowCatalogSelection(false)}
+            />
+          )}
         </div>
       )}
       </div>
     </>
+  );
+};
+
+const CatalogSelectionModal = ({ modules, onConfirm, onClose }) => {
+  const [moduleCounts, setModuleCounts] = useState(
+    modules.reduce((acc, m) => {
+      acc[m.moduleType] = m.numQuestions || 0;
+      return acc;
+    }, {})
+  );
+
+  const handleConfirm = () => {
+    const counts = Object.entries(moduleCounts).reduce((acc, [moduleType, count]) => {
+      acc[moduleType] = parseInt(count) || 0;
+      return acc;
+    }, {});
+    onConfirm(counts);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+        <h2 className="text-xl font-bold mb-4">Select Questions from Catalog</h2>
+        <p className="text-gray-600 text-sm mb-4">
+          Specify how many questions to select from the approved catalog for each module.
+        </p>
+
+        <div className="space-y-4 mb-6 max-h-80 overflow-y-auto">
+          {modules.map((module) => (
+            <div key={module.id} className="border rounded p-3">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {module.moduleType.replace(/_/g, ' ')}
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={moduleCounts[module.moduleType] || 0}
+                onChange={(e) =>
+                  setModuleCounts((prev) => ({
+                    ...prev,
+                    [module.moduleType]: e.target.value,
+                  }))
+                }
+                className="form-input w-full"
+                placeholder="Number of questions"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Configured: {module.numQuestions} questions
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex gap-2">
+          <button
+            onClick={handleConfirm}
+            className="btn btn-primary flex-1"
+          >
+            Select Questions
+          </button>
+          <button
+            onClick={onClose}
+            className="btn btn-secondary flex-1"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 
