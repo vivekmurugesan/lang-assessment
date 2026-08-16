@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FiZap, FiCheck, FiAlertCircle } from 'react-icons/fi';
 
-const GenerationProgressModal = ({ isOpen, status, progress, message, error }) => {
+const GenerationProgressModal = ({ isOpen, status, progress, message, error, onClose }) => {
   const [displayMessage, setDisplayMessage] = useState('');
 
   useEffect(() => {
@@ -88,6 +88,26 @@ const GenerationProgressModal = ({ isOpen, status, progress, message, error }) =
               </p>
             </div>
           )}
+
+          {/* Action Buttons */}
+          <div className="mt-6 flex gap-2">
+            {hasError && (
+              <button
+                onClick={onClose}
+                className="btn btn-secondary flex-1"
+              >
+                Dismiss
+              </button>
+            )}
+            {isComplete && (
+              <button
+                onClick={onClose}
+                className="btn btn-primary flex-1"
+              >
+                Close
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>

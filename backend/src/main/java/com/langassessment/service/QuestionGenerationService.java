@@ -254,7 +254,14 @@ public class QuestionGenerationService {
                 } else if (isRateLimit) {
                     // Check if this is a quota exhaustion (daily limit) rather than transient rate limit
                     if (errorMessage.contains("quota") && errorMessage.contains("free_tier")) {
-                        log.error("Free tier daily quota exhausted. Quota resets daily at midnight UTC.");
+                        log.error("=== QUOTA EXHAUSTION DETECTED ===");
+                        log.error("Free tier daily quota (20 requests/day) exhausted.");
+                        log.error("Skipping retry attempts - quota won't reset until next UTC day.");
+                        log.error("To resolve, either:");
+                        log.error("  1. Wait until tomorrow (quota resets daily at midnight UTC)");
+                        log.error("  2. Use a paid API key (Google Cloud billing)");
+                        log.error("  3. Create a new project with fresh quota");
+                        log.error("=================================");
                         throw new RuntimeException("Gemini API free tier daily quota (20 requests/day) has been exceeded. Please try again tomorrow or upgrade to a paid plan.");
                     }
 
