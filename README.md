@@ -104,10 +104,38 @@ Available at: `http://localhost:8080/swagger-ui.html`
 
 ## Configuration
 
+### Environment Variables
+
 Environment variables can be configured via:
-- `.env` file
-- `application.yml` (backend)
-- `config.js` (frontend)
+- `.env` file (default: development settings)
+- `docker-compose.yml` (production with Docker)
+- Backend: `application.yml`
+- Frontend: `config.js`
+
+### Email Configuration (Optional)
+
+To enable candidate invitation emails, configure SMTP settings in `.env`:
+
+```bash
+# Gmail Example (with App Password)
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-app-password
+MAIL_FROM=noreply@langassessment.com
+```
+
+**For Gmail:**
+1. Enable 2-Factor Authentication on your Google Account
+2. Generate an [App Password](https://myaccount.google.com/apppasswords)
+3. Use the 16-character app password in `MAIL_PASSWORD`
+
+**For Other Email Providers:**
+- **Outlook**: `smtp.office365.com:587`
+- **SendGrid**: `smtp.sendgrid.net:587`
+- **AWS SES**: `email-smtp.{region}.amazonaws.com:587`
+
+**Note:** Email sending is optional. If not configured, the system will start normally and skip sending invitations. Candidates can still access assessments via direct secure links.
 
 ## Security
 
