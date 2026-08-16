@@ -33,24 +33,34 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String jwt = getJwtFromRequest(request);
 
-            if (StringUtils.hasText(jwt) && jwtTokenProvider.validateToken(jwt)) {
-                String email = jwtTokenProvider.getEmailFromToken(jwt);
-                String role = jwtTokenProvider.getRoleFromToken(jwt);
+            if (StringUtils.hasText(jwt)) {
+                if (!jwtTokenProvider.validateToken(jwt)) {
+                    log.warn("JWT token validation failed for request path: {}", request.getRequestURI());
+                } else {
+                    String email = jwtTokenProvider.getEmailFromToken(jwt);
+                    String role = jwtTokenProvider.getRoleFromToken(jwt);
 
-                var user = userService.findByEmail(email);
-                if (user.isPresent()) {
-                    var authorities = Collections.singletonList(
-                            new SimpleGrantedAuthority("ROLE_" + role)
-                    );
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(user.get(), null, authorities);
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                    log.debug("Authentication set for user: {} with role: {}", email, role);
+                    log.debug("JWT Token validated. Email: {}, Role: {}, Path: {}", email, role, request.getRequestURI());
+
+                    var user = userService.findByEmail(email);
+                    if (user.isPresent()) {
+                        var authorities = Collections.singletonList(
+                                new SimpleGrantedAuthority("ROLE_" + role)
+                        );
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(user.get(), null, authorities);
+                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                        log.info("Authentication set for user: {} with role: ROLE_{}", email, role);
+                    } else {
+                        log.warn("User not found in database: {}", email);
+                    }
                 }
+            } else {
+                log.debug("No JWT token found in request for path: {}", request.getRequestURI());
             }
         } catch (Exception e) {
-            log.error("Could not set user authentication in security context: {}", e.getMessage());
+            log.error("Could not set user authentication in security context: {}", e.getMessage(), e);
         }
 
         filterChain.doFilter(request, response);
