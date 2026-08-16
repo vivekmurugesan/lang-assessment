@@ -187,6 +187,7 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
   const [generating, setGenerating] = useState(false);
   const [showCatalogSelection, setShowCatalogSelection] = useState(false);
   const [catalogSelecting, setCatalogSelecting] = useState(false);
+  const [questionStatus, setQuestionStatus] = useState(null);
   const [progressModal, setProgressModal] = useState({
     isOpen: false,
     status: 'generating', // 'generating', 'complete', 'error'
@@ -198,6 +199,7 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
   useEffect(() => {
     if (expanded) {
       loadModules();
+      loadQuestionStatus();
     }
   }, [expanded]);
 
@@ -210,9 +212,21 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
     }
   };
 
+  const loadQuestionStatus = async () => {
+    try {
+      const response = await api.get(`/admin/questions/assessments/${assessment.id}/status`);
+      if (response.data.success) {
+        setQuestionStatus(response.data.data);
+      }
+    } catch (error) {
+      console.error('Failed to load question status:', error);
+    }
+  };
+
   const handleConfigurationChange = () => {
     setShowModuleConfig(false);
     loadModules();
+    loadQuestionStatus();
   };
 
   const handleGenerateQuestions = async () => {
@@ -263,6 +277,7 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
       setTimeout(() => {
         setProgressModal({ isOpen: false, status: 'generating', progress: 0, message: '', error: null });
         setGenerating(false);
+        loadQuestionStatus();
         toast.success(`Generated ${questionCount} questions successfully!`);
         navigate(`/admin/questions/review/${assessment.id}`);
       }, 2000);
@@ -307,6 +322,7 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
       );
 
       toast.success('Questions selected from catalog successfully!');
+      loadQuestionStatus();
       setCatalogSelecting(false);
     } catch (error) {
       console.error('Failed to select questions from catalog:', error);
@@ -352,6 +368,34 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
         <div className="mt-4 pt-4 border-t">
           {assessment.description && (
             <p className="text-gray-600 mb-4">{assessment.description}</p>
+          )}
+
+          {questionStatus && (
+            <div className="mb-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="bg-blue-50 border border-blue-200 rounded p-3">
+                  <p className="text-xs text-gray-600">Generated</p>
+                  <p className="text-2xl font-bold text-blue-600">{questionStatus.generated || 0}</p>
+                </div>
+                <div className="bg-green-50 border border-green-200 rounded p-3">
+                  <p className="text-xs text-gray-600">Approved</p>
+                  <p className="text-2xl font-bold text-green-600">{questionStatus.approved || 0}</p>
+                </div>
+                <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
+                  <p className="text-xs text-gray-600">Pending</p>
+                  <p className="text-2xl font-bold text-yellow-600">{questionStatus.pending || 0}</p>
+                </div>
+                <div className="bg-red-50 border border-red-200 rounded p-3">
+                  <p className="text-xs text-gray-600">Rejected</p>
+                  <p className="text-2xl font-bold text-red-600">{questionStatus.rejected || 0}</p>
+                </div>
+              </div>
+              {questionStatus.pending > 0 && (
+                <div className="mt-3 text-xs text-yellow-700 bg-yellow-50 p-2 rounded border border-yellow-200">
+                  ⚠️ {questionStatus.pending} questions pending review in Catalog
+                </div>
+              )}
+            </div>
           )}
 
           <div className="mb-4">
