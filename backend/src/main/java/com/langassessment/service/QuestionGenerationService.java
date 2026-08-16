@@ -69,7 +69,7 @@ public class QuestionGenerationService {
     }
 
     private String buildPrompt(Assessment assessment, String moduleType, Integer count, String languageName) {
-        String cefrLevel = "INTERMEDIATE";
+        String cefrLevel = "B1";
         return String.format("""
                 Generate %d high-quality language assessment questions for the %s module in %s.
                 Assessment: %s
@@ -345,7 +345,7 @@ public class QuestionGenerationService {
                 Question question = Question.builder()
                         .language(language)
                         .moduleType(Question.ModuleType.valueOf(moduleType))
-                        .cefrLevel("INTERMEDIATE")
+                        .cefrLevel("B1")
                         .questionText(questionText)
                         .questionNumber(questionNumber++)
                         .status(Question.QuestionStatus.PENDING_REVIEW)

@@ -1,5 +1,5 @@
 -- Fix cefr_level column size in assessment_submissions table
--- The column was defined as varchar(5) but needs to support "INTERMEDIATE" (12 chars)
+-- The column was defined as varchar(5) but needs to support CEFR codes (A1, A2, B1, B2, C1, C2)
 
 -- Safely alter cefr_level column if it exists
 DO $$ BEGIN
