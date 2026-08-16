@@ -109,8 +109,8 @@ public class QuestionGenerationService {
                   {
                     "questionText": "Question here",
                     "type": "multiple-choice|short-answer|essay",
-                    "options": ["A", "B", "C", "D"] (if multiple choice),
-                    "correctAnswer": "A" (if multiple choice),
+                    "options": ["Full text of option A", "Full text of option B", "Full text of option C", "Full text of option D"] (if multiple choice),
+                    "correctAnswer": "A" (if multiple choice, use letter; for short-answer/essay: the full correct answer text),
                     "explanation": "Why this answer is correct"
                   }
                 ]

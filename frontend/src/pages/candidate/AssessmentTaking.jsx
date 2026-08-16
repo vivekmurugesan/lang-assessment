@@ -68,10 +68,23 @@ const AssessmentTaking = () => {
     try {
       const response = await fetch(question.questionOptionsUri);
       if (!response.ok) throw new Error('Failed to fetch options');
-      const options = await response.json();
+      const data = await response.json();
+
+      // Convert array to object with A, B, C, D keys if it's an array
+      let optionsObj = data;
+      if (Array.isArray(data)) {
+        optionsObj = {};
+        const letters = ['A', 'B', 'C', 'D'];
+        data.forEach((option, index) => {
+          if (index < letters.length) {
+            optionsObj[letters[index]] = option;
+          }
+        });
+      }
+
       setQuestionOptions(prev => ({
         ...prev,
-        [question.id]: options
+        [question.id]: optionsObj
       }));
     } catch (error) {
       console.error('Failed to fetch question options:', error);
