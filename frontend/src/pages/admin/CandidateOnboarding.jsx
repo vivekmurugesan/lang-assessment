@@ -12,6 +12,7 @@ const CandidateOnboarding = () => {
   const [showBulkForm, setShowBulkForm] = useState(false);
   const [loading, setLoading] = useState(true);
   const [copiedLink, setCopiedLink] = useState(null);
+  const [assessmentStatus, setAssessmentStatus] = useState(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -27,6 +28,7 @@ const CandidateOnboarding = () => {
   useEffect(() => {
     if (selectedAssessment) {
       loadCandidates(selectedAssessment);
+      loadAssessmentStatus(selectedAssessment);
     }
   }, [selectedAssessment]);
 
@@ -49,6 +51,17 @@ const CandidateOnboarding = () => {
       setCandidates(response.data.data.content);
     } catch (error) {
       console.error('Failed to load candidates:', error);
+    }
+  };
+
+  const loadAssessmentStatus = async (assessmentId) => {
+    try {
+      const response = await api.get(`/admin/questions/assessments/${assessmentId}/status`);
+      if (response.data.success) {
+        setAssessmentStatus(response.data.data);
+      }
+    } catch (error) {
+      console.error('Failed to load assessment status:', error);
     }
   };
 
@@ -155,16 +168,51 @@ const CandidateOnboarding = () => {
 
           {selectedAssessment && (
             <>
+              {assessmentStatus && assessmentStatus.approved === 0 && (
+                <div className="card mb-6 bg-red-50 border border-red-200">
+                  <div className="flex items-start gap-3">
+                    <div className="text-2xl">⚠️</div>
+                    <div>
+                      <h3 className="font-bold text-red-900 mb-1">Assessment Not Ready</h3>
+                      <p className="text-sm text-red-800 mb-2">
+                        No questions are approved for this assessment yet.
+                      </p>
+                      <p className="text-xs text-red-700 mb-3">
+                        <strong>To proceed:</strong> Go to Assessment Setup → Generate Questions → Go to Catalog → Approve Questions
+                      </p>
+                      <button
+                        onClick={() => navigate('/admin/assessments')}
+                        className="text-sm font-medium text-red-600 hover:text-red-700 underline"
+                      >
+                        Go to Assessment Setup →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {assessmentStatus && assessmentStatus.approved > 0 && (
+                <div className="card mb-6 bg-green-50 border border-green-200 p-3">
+                  <p className="text-sm text-green-800">
+                    ✓ <strong>{assessmentStatus.approved} questions approved</strong> - Ready for candidates
+                  </p>
+                </div>
+              )}
+
               <div className="flex gap-2 mb-6">
                 <button
                   onClick={() => setShowAddForm(!showAddForm)}
-                  className="btn btn-primary flex items-center gap-2"
+                  disabled={!assessmentStatus || assessmentStatus.approved === 0}
+                  className="btn btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={!assessmentStatus || assessmentStatus.approved === 0 ? 'Approve questions first' : 'Add a candidate'}
                 >
                   <FiPlus size={18} /> Add Candidate
                 </button>
                 <button
                   onClick={() => setShowBulkForm(!showBulkForm)}
-                  className="btn btn-secondary flex items-center gap-2"
+                  disabled={!assessmentStatus || assessmentStatus.approved === 0}
+                  className="btn btn-secondary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={!assessmentStatus || assessmentStatus.approved === 0 ? 'Approve questions first' : 'Bulk upload candidates'}
                 >
                   <FiUpload size={18} /> Bulk Upload
                 </button>

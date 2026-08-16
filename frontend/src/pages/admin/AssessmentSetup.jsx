@@ -462,9 +462,16 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
               <FiZap size={14} /> {generating ? 'Generating...' : 'Generate Questions'}
             </button>
             <button
-              onClick={() => setShowCatalogSelection(true)}
-              disabled={catalogSelecting || modules.length === 0}
+              onClick={() => {
+                if (!questionStatus || questionStatus.approved === 0) {
+                  toast.error('No approved questions available. Please generate and approve questions first.');
+                  return;
+                }
+                setShowCatalogSelection(true);
+              }}
+              disabled={catalogSelecting || modules.length === 0 || !questionStatus || questionStatus.approved === 0}
               className="btn btn-sm bg-green-600 text-white hover:bg-green-700 disabled:bg-gray-400 flex items-center gap-1"
+              title={!questionStatus || questionStatus.approved === 0 ? 'Approve questions in Catalog first' : 'Select questions from approved catalog'}
             >
               <FiPlus size={14} /> {catalogSelecting ? 'Selecting...' : 'Select from Catalog'}
             </button>
