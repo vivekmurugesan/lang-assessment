@@ -31,6 +31,7 @@ public class AssessmentCandidateAPIController {
     private final QuestionService questionService;
     private final AssessmentModuleService moduleService;
     private final AssessmentModuleRepository moduleRepository;
+    private final QuestionCatalogService catalogService;
 
     @GetMapping("/my-assessments")
     public ResponseEntity<AuthDTO.ApiResponse<List<CandidateDTO>>> getMyAssessments(
@@ -101,25 +102,20 @@ public class AssessmentCandidateAPIController {
         try {
             AssessmentCandidate candidate = candidateService.getCandidateBySecureLinkEntity(secureLink);
             Assessment assessment = candidate.getAssessment();
-            List<AssessmentModule> modules = moduleRepository.findByAssessment(assessment);
 
-            if (modules == null || modules.isEmpty()) {
-                log.warn("No modules configured for assessment: {}", assessment.getId());
-                return ResponseEntity.ok(new AuthDTO.ApiResponse<>(true, "No modules configured", List.of()));
+            // Try to get pre-selected questions from catalog
+            List<Question> selectedQuestions = catalogService.getAssessmentQuestions(assessment);
+
+            if (selectedQuestions.isEmpty()) {
+                log.warn("No pre-selected questions found for assessment: {}", assessment.getId());
+                return ResponseEntity.ok(new AuthDTO.ApiResponse<>(true, "No questions available", List.of()));
             }
 
-            List<QuestionWithOptionsDTO> allQuestions = modules.stream()
-                    .flatMap(module -> {
-                        List<Question> questions = questionService.getActiveQuestionsByModuleAndLanguage(
-                                assessment.getLanguage().getId(),
-                                module.getModuleType().toString(),
-                                module.getNumQuestions()
-                        );
-                        return questions.stream().map(q -> convertToQuestionDTO(q, module.getModuleType().toString()));
-                    })
+            List<QuestionWithOptionsDTO> questionDtos = selectedQuestions.stream()
+                    .map(q -> convertToQuestionDTO(q, q.getModuleType().toString()))
                     .collect(Collectors.toList());
 
-            return ResponseEntity.ok(new AuthDTO.ApiResponse<>(true, "Questions retrieved", allQuestions));
+            return ResponseEntity.ok(new AuthDTO.ApiResponse<>(true, "Questions retrieved", questionDtos));
         } catch (Exception e) {
             log.error("Failed to retrieve questions: {}", e.getMessage());
             return ResponseEntity.badRequest()
