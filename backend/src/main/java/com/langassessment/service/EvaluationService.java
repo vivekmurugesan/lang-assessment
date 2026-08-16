@@ -56,7 +56,7 @@ public class EvaluationService {
 
                 if (isMultipleChoice(question)) {
                     int score = evaluateMultipleChoice(response, question);
-                    response.setScore(score);
+                    response.setScore((double) score);
                     totalScore += score;
                     moduleScores.put(moduleType, moduleScores.getOrDefault(moduleType, 0) + score);
                 } else if (isOpenEnded(question)) {
@@ -70,7 +70,7 @@ public class EvaluationService {
 
             // Calculate average score
             int maxScore = responses.size() * 100;
-            int finalScore = (int) ((double) totalScore / responses.size());
+            double finalScore = (double) totalScore / responses.size();
 
             submission.setTotalScore(finalScore);
             submission.setCefrLevel(determineCEFRLevel(finalScore));
@@ -189,7 +189,7 @@ public class EvaluationService {
                 question.getModuleType() == Question.ModuleType.SPOKEN_PRODUCTION;
     }
 
-    private String determineCEFRLevel(int score) {
+    private String determineCEFRLevel(double score) {
         if (score >= 90) return "C2";
         if (score >= 80) return "C1";
         if (score >= 70) return "B2";
