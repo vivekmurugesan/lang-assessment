@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { FiRefreshCw, FiEye, FiMail, FiCheckCircle, FiClock } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
+import { FiRefreshCw, FiEye, FiMail, FiCheckCircle, FiClock, FiHome } from 'react-icons/fi';
 import api from '../../api/axiosConfig';
 
 const AssessmentMonitoring = () => {
+  const navigate = useNavigate();
   const [assessments, setAssessments] = useState([]);
   const [selectedAssessment, setSelectedAssessment] = useState(null);
   const [candidates, setCandidates] = useState([]);
@@ -115,9 +117,18 @@ const AssessmentMonitoring = () => {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="page-title">Assessment Monitoring</h1>
-          <p className="page-subtitle">Track candidate progress and completion status</p>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate('/admin')}
+            className="btn btn-secondary flex items-center gap-2 hover:bg-gray-200"
+            title="Back to Admin Dashboard"
+          >
+            <FiHome size={18} /> Home
+          </button>
+          <div>
+            <h1 className="page-title">Assessment Monitoring</h1>
+            <p className="page-subtitle">Track candidate progress and completion status</p>
+          </div>
         </div>
         <button
           onClick={() => {
