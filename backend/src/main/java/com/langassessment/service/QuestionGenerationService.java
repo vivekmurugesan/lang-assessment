@@ -1,12 +1,5 @@
 package com.langassessment.service;
 
-import com.google.api.client.http.HttpRequestInitializer;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.services.customsearch.Customsearch;
-import com.google.api.services.customsearch.model.Query;
-import com.google.api.services.customsearch.model.Result;
-import com.google.api.services.customsearch.model.Search;
 import com.langassessment.dto.GeneratedQuestionDTO;
 import com.langassessment.entity.Assessment;
 import com.langassessment.entity.AssessmentModule;
@@ -76,6 +69,7 @@ public class QuestionGenerationService {
     }
 
     private String buildPrompt(Assessment assessment, String moduleType, Integer count, String languageName) {
+        String cefrLevel = "INTERMEDIATE";
         return String.format("""
                 Generate %d high-quality language assessment questions for the %s module in %s.
                 Assessment: %s
@@ -104,9 +98,9 @@ public class QuestionGenerationService {
                 languageName,
                 assessment.getTitle(),
                 assessment.getDescription() != null ? assessment.getDescription() : "Not provided",
-                assessment.getCefrLevel() != null ? assessment.getCefrLevel() : "INTERMEDIATE",
+                cefrLevel,
                 moduleType,
-                assessment.getCefrLevel() != null ? assessment.getCefrLevel() : "INTERMEDIATE",
+                cefrLevel,
                 getModuleSpecificGuidance(moduleType)
         );
     }
