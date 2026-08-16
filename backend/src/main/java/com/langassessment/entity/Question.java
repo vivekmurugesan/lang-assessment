@@ -45,6 +45,33 @@ public class Question {
     @Column(nullable = false)
     private QuestionStatus status;
 
+    @Column(name = "audio_url", columnDefinition = "TEXT")
+    private String audioUrl;
+
+    @Column(name = "image_url", columnDefinition = "TEXT")
+    private String imageUrl;
+
+    @Column(name = "question_options", columnDefinition = "TEXT")
+    private String questionOptions;
+
+    @Column(name = "correct_answer", length = 50)
+    private String correctAnswer;
+
+    @Column(name = "explanation", columnDefinition = "TEXT")
+    private String explanation;
+
+    @Column(name = "generated_at")
+    private LocalDateTime generatedAt;
+
+    @Column(name = "generated_by", length = 50)
+    private String generatedBy;
+
+    @Column(name = "review_notes", columnDefinition = "TEXT")
+    private String reviewNotes;
+
+    @Column(name = "assessed_by", length = 50)
+    private String assessedBy;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -64,6 +91,8 @@ public class Question {
     public enum QuestionStatus {
         ACTIVE,
         INACTIVE,
-        UNDER_REVIEW
+        UNDER_REVIEW,
+        PENDING_REVIEW,
+        REJECTED
     }
 }

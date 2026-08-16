@@ -10,8 +10,8 @@ import org.springframework.context.annotation.Configuration;
 @Slf4j
 public class MinIOConfig {
 
-    @Value("${minio.url}")
-    private String minioUrl;
+    @Value("${minio.endpoint}")
+    private String minioEndpoint;
 
     @Value("${minio.access-key}")
     private String accessKey;
@@ -23,7 +23,7 @@ public class MinIOConfig {
     public MinioClient minioClient() {
         try {
             MinioClient client = MinioClient.builder()
-                    .endpoint(minioUrl)
+                    .endpoint(minioEndpoint)
                     .credentials(accessKey, secretKey)
                     .build();
             log.info("MinIO client initialized");

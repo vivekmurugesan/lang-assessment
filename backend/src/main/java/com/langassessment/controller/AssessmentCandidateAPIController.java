@@ -102,9 +102,14 @@ public class AssessmentCandidateAPIController {
             Assessment assessment = candidate.getAssessment();
             List<AssessmentModule> modules = moduleRepository.findByAssessment(assessment);
 
+            if (modules == null || modules.isEmpty()) {
+                log.warn("No modules configured for assessment: {}", assessment.getId());
+                return ResponseEntity.ok(new AuthDTO.ApiResponse<>(true, "No modules configured", List.of()));
+            }
+
             List<QuestionWithOptionsDTO> allQuestions = modules.stream()
                     .flatMap(module -> {
-                        List<Question> questions = questionService.getQuestionsByModuleAndLanguage(
+                        List<Question> questions = questionService.getActiveQuestionsByModuleAndLanguage(
                                 assessment.getLanguage().getId(),
                                 module.getModuleType().toString(),
                                 module.getNumQuestions()
