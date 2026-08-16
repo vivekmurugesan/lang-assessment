@@ -22,6 +22,7 @@ public class SubmissionService {
     private final QuestionResponseRepository responseRepository;
     private final AssessmentCandidateRepository candidateRepository;
     private final QuestionRepository questionRepository;
+    private final EvaluationService evaluationService;
 
     @Transactional
     public AssessmentSubmission startAssessment(Integer candidateId) {
@@ -88,7 +89,17 @@ public class SubmissionService {
         candidate.setStatus(AssessmentCandidate.CandidateStatus.COMPLETED);
         candidateRepository.save(candidate);
 
-        return submissionRepository.save(submission);
+        AssessmentSubmission savedSubmission = submissionRepository.save(submission);
+
+        // Trigger evaluation
+        log.info("Triggering evaluation for submission: {}", submissionId);
+        try {
+            evaluationService.evaluateSubmission(savedSubmission);
+        } catch (Exception e) {
+            log.error("Error triggering evaluation: {}", e.getMessage());
+        }
+
+        return savedSubmission;
     }
 
     @Transactional(readOnly = true)

@@ -32,4 +32,6 @@ public interface QuestionRepository extends JpaRepository<Question, Integer> {
             Question.ModuleType moduleType,
             Question.QuestionStatus status
     );
+
+    List<Question> findByStatusOrderByModuleTypeAsc(Question.QuestionStatus status);
 }
