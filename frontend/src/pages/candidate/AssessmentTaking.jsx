@@ -15,12 +15,20 @@ const AssessmentTaking = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [questionOptions, setQuestionOptions] = useState({});
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
+  const audioPlayerRef = useRef(null);
 
   useEffect(() => {
     loadAssessment();
   }, [secureLink]);
+
+  useEffect(() => {
+    if (currentQuestion?.questionOptionsUri && !questionOptions[currentQuestion.id]) {
+      fetchQuestionOptions(currentQuestion);
+    }
+  }, [currentQuestion?.id, questionOptions]);
 
   const loadAssessment = async () => {
     try {
@@ -51,6 +59,36 @@ const AssessmentTaking = () => {
       console.error('Failed to load assessment:', error);
       toast.error('Failed to load assessment');
       setLoading(false);
+    }
+  };
+
+  const fetchQuestionOptions = async (question) => {
+    if (!question.questionOptionsUri) return;
+
+    try {
+      const response = await fetch(question.questionOptionsUri);
+      if (!response.ok) throw new Error('Failed to fetch options');
+      const data = await response.json();
+
+      // Convert array to object with A, B, C, D keys if it's an array
+      let optionsObj = data;
+      if (Array.isArray(data)) {
+        optionsObj = {};
+        const letters = ['A', 'B', 'C', 'D'];
+        data.forEach((option, index) => {
+          if (index < letters.length) {
+            optionsObj[letters[index]] = option;
+          }
+        });
+      }
+
+      setQuestionOptions(prev => ({
+        ...prev,
+        [question.id]: optionsObj
+      }));
+    } catch (error) {
+      console.error('Failed to fetch question options:', error);
+      toast.error('Failed to load question options');
     }
   };
 
@@ -232,34 +270,43 @@ const AssessmentTaking = () => {
                 {/* Audio Playback for Listening */}
                 {currentQuestion?.moduleType === 'LISTENING' && (
                   <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-                    <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                      <FiVolume2 size={18} />
-                      Play Audio
-                    </button>
-                    <p className="text-sm text-gray-600 mt-2">Click to listen to the audio content</p>
+                    {currentQuestion?.audioUrl ? (
+                      <>
+                        <audio ref={audioPlayerRef} src={currentQuestion.audioUrl} className="w-full mb-3" controls />
+                        <p className="text-sm text-gray-600">Click the play button above to listen to the audio content</p>
+                      </>
+                    ) : (
+                      <p className="text-sm text-gray-600 text-center py-4">Audio content not available</p>
+                    )}
                   </div>
                 )}
 
                 {/* Multiple Choice Options */}
                 {['READING', 'LISTENING'].includes(currentQuestion?.moduleType) && (
                   <div className="space-y-3">
-                    {['A', 'B', 'C', 'D'].map(option => (
-                      <label key={option} className="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-indigo-500 transition"
-                        style={{
-                          borderColor: responses[currentQuestion?.id]?.option === option ? '#4F46E5' : '#D1D5DB'
-                        }}>
-                        <input
-                          type="radio"
-                          name={`question-${currentQuestion?.id}`}
-                          value={option}
-                          checked={responses[currentQuestion?.id]?.option === option}
-                          onChange={(e) => handleResponseChange(e.target.value, 'option')}
-                          className="mr-3"
-                        />
-                        <span className="font-medium mr-3">{option}.</span>
-                        <span>Option text here</span>
-                      </label>
-                    ))}
+                    {questionOptions[currentQuestion?.id] ? (
+                      Object.entries(questionOptions[currentQuestion?.id]).map(([key, value]) => (
+                        <label key={key} className="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-indigo-500 transition"
+                          style={{
+                            borderColor: responses[currentQuestion?.id]?.option === key ? '#4F46E5' : '#D1D5DB'
+                          }}>
+                          <input
+                            type="radio"
+                            name={`question-${currentQuestion?.id}`}
+                            value={key}
+                            checked={responses[currentQuestion?.id]?.option === key}
+                            onChange={(e) => handleResponseChange(e.target.value, 'option')}
+                            className="mr-3"
+                          />
+                          <span className="font-medium mr-3">{key}.</span>
+                          <span>{value}</span>
+                        </label>
+                      ))
+                    ) : (
+                      <div className="text-center py-6 bg-gray-100 rounded-lg">
+                        <p className="text-gray-600">Loading options...</p>
+                      </div>
+                    )}
                   </div>
                 )}
 
