@@ -10,6 +10,4 @@ import java.util.List;
 @Repository
 public interface QuestionResponseRepository extends JpaRepository<QuestionResponse, Integer> {
     List<QuestionResponse> findBySubmission(AssessmentSubmission submission);
-
-    List<QuestionResponse> findByAssessmentSubmission(AssessmentSubmission submission);
 }

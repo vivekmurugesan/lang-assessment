@@ -44,7 +44,7 @@ public class EvaluationService {
         try {
             log.info("Starting evaluation for submission: {}", submission.getId());
 
-            List<QuestionResponse> responses = responseRepository.findByAssessmentSubmission(submission);
+            List<QuestionResponse> responses = responseRepository.findBySubmission(submission);
 
             // Score multiple-choice and reading questions
             int totalScore = 0;
