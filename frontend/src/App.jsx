@@ -11,6 +11,7 @@ import CandidateLoginPage from './pages/auth/CandidateLoginPage';
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AssessmentSetup from './pages/admin/AssessmentSetup';
+import QuestionReview from './pages/admin/QuestionReview';
 import CandidateOnboarding from './pages/admin/CandidateOnboarding';
 import AssessmentMonitoring from './pages/admin/AssessmentMonitoring';
 import ReportingDashboard from './pages/admin/ReportingDashboard';
@@ -48,6 +49,7 @@ function App() {
                 <Routes>
                   <Route path="/" element={<AdminDashboard />} />
                   <Route path="/assessments" element={<AssessmentSetup />} />
+                  <Route path="/questions/review/:assessmentId" element={<QuestionReview />} />
                   <Route path="/onboarding" element={<CandidateOnboarding />} />
                   <Route path="/monitoring" element={<AssessmentMonitoring />} />
                   <Route path="/reports" element={<ReportingDashboard />} />

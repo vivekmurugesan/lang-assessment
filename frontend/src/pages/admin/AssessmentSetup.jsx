@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
+import { FiPlus, FiEdit2, FiTrash2, FiChevronDown, FiChevronUp, FiWand2 } from 'react-icons/fi';
+import { toast } from 'react-toastify';
 import api from '../../api/axiosConfig';
 
 const AssessmentSetup = () => {
@@ -165,8 +167,10 @@ const AssessmentSetup = () => {
 };
 
 const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
+  const navigate = useNavigate();
   const [modules, setModules] = useState([]);
   const [showModuleForm, setShowModuleForm] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const [moduleFormData, setModuleFormData] = useState({
     moduleType: '',
     numQuestions: 10,
@@ -222,6 +226,25 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
       } catch (error) {
         console.error('Failed to delete module:', error);
       }
+    }
+  };
+
+  const handleGenerateQuestions = async () => {
+    if (modules.length === 0) {
+      toast.error('Please add at least one module before generating questions');
+      return;
+    }
+
+    setGenerating(true);
+    try {
+      const response = await api.post(`/admin/questions/generate/${assessment.id}`);
+      toast.success(`Generated ${response.data.data?.length || 0} questions successfully!`);
+      navigate(`/admin/questions/review/${assessment.id}`);
+    } catch (error) {
+      console.error('Failed to generate questions:', error);
+      toast.error('Failed to generate questions. Check backend logs for details.');
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -351,8 +374,18 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
           </div>
 
           <div className="flex gap-2 pt-4 border-t">
-            <button className="btn btn-secondary btn-sm flex items-center gap-1">
-              <FiEdit2 size={14} /> Manage Questions
+            <button
+              onClick={handleGenerateQuestions}
+              disabled={generating}
+              className="btn btn-sm bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-gray-400 flex items-center gap-1"
+            >
+              <FiWand2 size={14} /> {generating ? 'Generating...' : 'Generate Questions'}
+            </button>
+            <button
+              onClick={() => navigate(`/admin/questions/review/${assessment.id}`)}
+              className="btn btn-secondary btn-sm flex items-center gap-1"
+            >
+              <FiEdit2 size={14} /> Review Questions
             </button>
             <button
               onClick={onDelete}
