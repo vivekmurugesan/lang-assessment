@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -45,6 +46,7 @@ public class AssessmentCandidateAPIController {
     }
 
     @GetMapping("/assessments/{secureLink}")
+    @Transactional(readOnly = true)
     public ResponseEntity<AuthDTO.ApiResponse<AssessmentWithModulesDTO>> getAssessment(
             @PathVariable String secureLink) {
         try {
@@ -69,6 +71,7 @@ public class AssessmentCandidateAPIController {
     }
 
     @PostMapping("/assessments/{secureLink}/start")
+    @Transactional
     public ResponseEntity<AuthDTO.ApiResponse<AssessmentSubmissionDTO>> startAssessment(
             @PathVariable String secureLink) {
         try {
@@ -91,6 +94,7 @@ public class AssessmentCandidateAPIController {
     }
 
     @GetMapping("/assessments/{secureLink}/questions")
+    @Transactional(readOnly = true)
     public ResponseEntity<AuthDTO.ApiResponse<List<QuestionWithOptionsDTO>>> getAssessmentQuestions(
             @PathVariable String secureLink) {
         try {
@@ -133,6 +137,7 @@ public class AssessmentCandidateAPIController {
     }
 
     @PostMapping("/submissions/{submissionId}/submit")
+    @Transactional
     public ResponseEntity<AuthDTO.ApiResponse<AssessmentSubmissionDTO>> submitAssessment(
             @PathVariable Integer submissionId) {
         try {
@@ -154,6 +159,7 @@ public class AssessmentCandidateAPIController {
     }
 
     @GetMapping("/submissions/{secureLink}/results")
+    @Transactional(readOnly = true)
     public ResponseEntity<AuthDTO.ApiResponse<AssessmentSubmissionDTO>> getSubmissionResults(
             @PathVariable String secureLink) {
         try {
