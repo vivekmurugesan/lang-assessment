@@ -118,8 +118,8 @@ const CandidateHome = () => {
             <div key={assessment.id} className="card hover:shadow-lg transition">
               <div className="flex justify-between items-start mb-3">
                 <div className="flex-1">
-                  <h3 className="font-bold text-lg mb-1">{assessment.secureLink ? 'Assessment' : assessment.title}</h3>
-                  <p className="text-sm text-gray-600">{assessment.name || assessment.languageName}</p>
+                  <h3 className="font-bold text-lg mb-1">{assessment.title || 'Assessment'}</h3>
+                  <p className="text-sm text-gray-600">{assessment.languageName}</p>
                 </div>
                 <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${getStatusColor(assessment.status)}`}>
                   {assessment.status}
