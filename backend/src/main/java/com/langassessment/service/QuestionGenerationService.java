@@ -82,6 +82,28 @@ public class QuestionGenerationService {
                 - Have clear answers
                 %s
 
+                IMPORTANT - CONTENT SAFETY GUIDELINES:
+                Questions MUST be:
+                ✓ Educational and appropriate for language learners
+                ✓ Non-violent and free from graphic content
+                ✓ Non-sexual and professional in nature
+                ✓ Respectful to all cultures, religions, and groups
+                ✓ Free from hate speech or discriminatory language
+                ✓ Not promoting dangerous, illegal, or harmful activities
+                ✓ Non-controversial and not pushing political agendas
+                ✓ Free from toxic or abusive language
+                ✓ Not containing explicit, profane, or offensive content
+
+                Questions MUST NOT:
+                ✗ Contain violence, gore, or graphic descriptions
+                ✗ Contain sexual, erotic, or adult content
+                ✗ Promote harmful, illegal, or dangerous activities
+                ✗ Contain hate speech, slurs, or discriminatory content
+                ✗ Discuss sensitive political or religious controversies
+                ✗ Contain toxic, abusive, or bullying language
+                ✗ Reference hard drugs, weapons, or illegal activities
+                ✗ Contain explicit or profane language
+
                 Return ONLY a JSON array with format:
                 [
                   {
@@ -263,6 +285,8 @@ public class QuestionGenerationService {
 
     private List<Question> parseAndCreateQuestions(String jsonResponse, String moduleType, Language language, String createdBy, Integer count) {
         List<Question> questions = new ArrayList<>();
+        int rejectedCount = 0;
+
         try {
             String cleanJson = jsonResponse.replaceAll("```json", "").replaceAll("```", "").trim();
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
@@ -270,11 +294,27 @@ public class QuestionGenerationService {
 
             int questionNumber = 1;
             for (Map<String, Object> q : questionsList) {
+                String questionText = (String) q.get("questionText");
+                List<String> options = (List<String>) q.get("options");
+                String correctAnswer = (String) q.get("correctAnswer");
+                String explanation = (String) q.get("explanation");
+
+                // Perform safety validation
+                ContentSafetyValidator.SafetyCheckResult safetyResult =
+                    ContentSafetyValidator.validateQuestion(questionText, options, correctAnswer, explanation);
+
+                if (!safetyResult.isSafe) {
+                    rejectedCount++;
+                    log.error("Question rejected due to safety violation: Category={}, Reason={}, FlaggedContent={}",
+                        safetyResult.category, safetyResult.reason, safetyResult.flaggedContent);
+                    continue;
+                }
+
                 Question question = Question.builder()
                         .language(language)
                         .moduleType(Question.ModuleType.valueOf(moduleType))
                         .cefrLevel("INTERMEDIATE")
-                        .questionText((String) q.get("questionText"))
+                        .questionText(questionText)
                         .questionNumber(questionNumber++)
                         .status(Question.QuestionStatus.PENDING_REVIEW)
                         .generatedAt(LocalDateTime.now())
@@ -282,8 +322,7 @@ public class QuestionGenerationService {
                         .build();
 
                 // Store question options in MinIO
-                if (q.containsKey("options")) {
-                    List<String> options = (List<String>) q.get("options");
+                if (options != null && !options.isEmpty()) {
                     String optionsJson = mapper.writeValueAsString(options);
                     String optionsUri = uploadLargeContentToMinIO(optionsJson, "question-options");
                     if (optionsUri != null) {
@@ -291,13 +330,12 @@ public class QuestionGenerationService {
                     }
                 }
 
-                if (q.containsKey("correctAnswer")) {
-                    question.setCorrectAnswer((String) q.get("correctAnswer"));
+                if (correctAnswer != null && !correctAnswer.isEmpty()) {
+                    question.setCorrectAnswer(correctAnswer);
                 }
 
                 // Store explanation in MinIO
-                if (q.containsKey("explanation")) {
-                    String explanation = (String) q.get("explanation");
+                if (explanation != null && !explanation.isEmpty()) {
                     String explanationUri = uploadLargeContentToMinIO(explanation, "question-explanation");
                     if (explanationUri != null) {
                         question.setExplanationUri(explanationUri);
@@ -305,6 +343,11 @@ public class QuestionGenerationService {
                 }
 
                 questions.add(question);
+            }
+
+            if (rejectedCount > 0) {
+                log.warn("Question generation complete: {} questions passed safety checks, {} rejected",
+                    questions.size(), rejectedCount);
             }
         } catch (Exception e) {
             log.error("Error parsing generated questions: {}", e.getMessage(), e);
