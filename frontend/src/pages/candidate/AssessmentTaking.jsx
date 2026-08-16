@@ -24,6 +24,8 @@ const AssessmentTaking = () => {
     loadAssessment();
   }, [secureLink]);
 
+  const currentQuestion = questions[currentQuestionIndex];
+
   useEffect(() => {
     if (currentQuestion?.questionOptionsUri && !questionOptions[currentQuestion.id]) {
       fetchQuestionOptions(currentQuestion);

@@ -80,13 +80,25 @@ const QuestionCatalog = () => {
 
   const handleApprove = async (questionId) => {
     try {
-      await api.post(`/admin/questions/${questionId}/approve?approvedBy=${localStorage.getItem('userEmail')}`);
-      toast.success('Question approved');
-      loadCatalogQuestions();
-      loadStatistics();
+      const userEmail = localStorage.getItem('userEmail');
+      if (!userEmail) {
+        toast.error('User email not found. Please log in again.');
+        return;
+      }
+
+      const response = await api.post(
+        `/admin/questions/catalog/${questionId}/approve?approvedBy=${encodeURIComponent(userEmail)}`
+      );
+
+      if (response.data.success) {
+        toast.success('Question approved successfully');
+        loadCatalogQuestions();
+        loadStatistics();
+      }
     } catch (error) {
       console.error('Failed to approve question:', error);
-      toast.error('Failed to approve question');
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to approve question';
+      toast.error(errorMessage);
     }
   };
 
@@ -95,15 +107,25 @@ const QuestionCatalog = () => {
     if (!reason) return;
 
     try {
-      await api.post(
-        `/admin/questions/${questionId}/reject?reason=${encodeURIComponent(reason)}&rejectedBy=${localStorage.getItem('userEmail')}`
+      const userEmail = localStorage.getItem('userEmail');
+      if (!userEmail) {
+        toast.error('User email not found. Please log in again.');
+        return;
+      }
+
+      const response = await api.post(
+        `/admin/questions/catalog/${questionId}/reject?reason=${encodeURIComponent(reason)}&rejectedBy=${encodeURIComponent(userEmail)}`
       );
-      toast.success('Question rejected');
-      loadCatalogQuestions();
-      loadStatistics();
+
+      if (response.data.success) {
+        toast.success('Question rejected successfully');
+        loadCatalogQuestions();
+        loadStatistics();
+      }
     } catch (error) {
       console.error('Failed to reject question:', error);
-      toast.error('Failed to reject question');
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to reject question';
+      toast.error(errorMessage);
     }
   };
 
