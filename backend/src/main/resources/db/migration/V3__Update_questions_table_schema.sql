@@ -32,7 +32,7 @@ ALTER TABLE questions
   ADD COLUMN IF NOT EXISTS explanation_uri TEXT;
 
 -- The questions table now supports:
--- - cefr_level: varchar(20) for full CEFR level names (e.g., "INTERMEDIATE")
+-- - cefr_level: varchar(20) for CEFR level codes (A1, A2, B1, B2, C1, C2)
 -- - correct_answer: varchar(100) for longer answer texts (if column exists)
 -- - question_options_uri: TEXT storing MinIO URL for options
 -- - explanation_uri: TEXT storing MinIO URL for explanations

@@ -1,5 +1,5 @@
 -- Fix cefrLevel column size from varchar(5) to varchar(20)
--- This allows storing values like "INTERMEDIATE" (12 chars) instead of just "B1" (2 chars)
+-- This allows storing CEFR level codes: A1, A2, B1, B2, C1, C2
 
 ALTER TABLE questions
   ALTER COLUMN cefr_level TYPE varchar(20);
