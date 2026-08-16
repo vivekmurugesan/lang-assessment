@@ -116,10 +116,57 @@ public class QuestionGenerationService {
         };
     }
 
+    private void listAvailableModels() {
+        try {
+            log.info("=== DEBUGGING: Listing available Gemini API models ===");
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            String url = "https://generativelanguage.googleapis.com/v1beta/models?key=" + geminiApiKey;
+            HttpEntity<String> entity = new HttpEntity<>("", headers);
+
+            ResponseEntity<Map> response = restTemplate.exchange(
+                url,
+                org.springframework.http.HttpMethod.GET,
+                entity,
+                Map.class
+            );
+
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> body = response.getBody();
+                if (body.containsKey("models")) {
+                    List<Map<String, Object>> models = (List<Map<String, Object>>) body.get("models");
+                    log.info("Available Gemini models:");
+                    for (Map<String, Object> model : models) {
+                        String name = (String) model.get("name");
+                        String displayName = (String) model.get("displayName");
+                        List<String> supportedMethods = (List<String>) model.get("supportedGenerationMethods");
+                        log.info("  - {} ({}): {}", name, displayName, supportedMethods);
+                    }
+                } else {
+                    log.warn("No 'models' field in response");
+                    log.debug("Response body: {}", body);
+                }
+            } else {
+                log.error("Failed to list models: {}", response.getStatusCode());
+            }
+        } catch (Exception e) {
+            log.error("Error listing available models: {}", e.getMessage(), e);
+        }
+        log.info("=== END MODEL LISTING DEBUG ===");
+    }
+
     private String callGeminiAPI(String prompt) {
+        // Debug: List available models on first call
+        listAvailableModels();
+
         int maxRetries = 3;
         int retryCount = 0;
         long initialWait = 1000; // 1 second
+
+        log.info("Attempting to generate questions using Gemini API");
+        log.info("API URL: {}", geminiApiUrl);
+        log.info("API Key present: {}", geminiApiKey != null && !geminiApiKey.isEmpty());
 
         while (retryCount < maxRetries) {
             try {
@@ -136,6 +183,7 @@ public class QuestionGenerationService {
 
                 HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
                 String url = geminiApiUrl + "?key=" + geminiApiKey;
+                log.debug("Calling Gemini API endpoint: {}", geminiApiUrl.replaceAll(":generateContent.*", ":generateContent"));
 
                 ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
 
