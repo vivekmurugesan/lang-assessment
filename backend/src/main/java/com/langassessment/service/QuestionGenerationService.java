@@ -117,33 +117,82 @@ public class QuestionGenerationService {
     }
 
     private String callGeminiAPI(String prompt) {
-        try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
+        int maxRetries = 3;
+        int retryCount = 0;
+        long initialWait = 1000; // 1 second
 
-            Map<String, Object> requestBody = new HashMap<>();
-            Map<String, Object> content = new HashMap<>();
-            Map<String, Object> part = new HashMap<>();
+        while (retryCount < maxRetries) {
+            try {
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
 
-            part.put("text", prompt);
-            content.put("parts", List.of(part));
-            requestBody.put("contents", List.of(content));
+                Map<String, Object> requestBody = new HashMap<>();
+                Map<String, Object> content = new HashMap<>();
+                Map<String, Object> part = new HashMap<>();
 
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-            String url = geminiApiUrl + "?key=" + geminiApiKey;
+                part.put("text", prompt);
+                content.put("parts", List.of(part));
+                requestBody.put("contents", List.of(content));
 
-            ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
+                HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
+                String url = geminiApiUrl + "?key=" + geminiApiKey;
 
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                return extractTextFromResponse(response.getBody());
-            } else {
-                log.error("Gemini API error: {}", response.getStatusCode());
-                throw new RuntimeException("Failed to call Gemini API");
+                ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
+
+                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                    return extractTextFromResponse(response.getBody());
+                } else {
+                    log.error("Gemini API error: {}", response.getStatusCode());
+                    throw new RuntimeException("Failed to call Gemini API: " + response.getStatusCode());
+                }
+            } catch (Exception e) {
+                String errorMessage = e.getMessage();
+
+                // Check for rate limit errors
+                if (errorMessage.contains("429") || errorMessage.contains("Too Many Requests") ||
+                    errorMessage.contains("quota") || errorMessage.contains("RESOURCE_EXHAUSTED")) {
+
+                    if (retryCount < maxRetries - 1) {
+                        long waitTime = initialWait * (long) Math.pow(2, retryCount);
+                        log.warn("Rate limit hit. Retry {} of {} after {}ms. Error: {}",
+                            retryCount + 1, maxRetries, waitTime, errorMessage);
+
+                        try {
+                            Thread.sleep(waitTime);
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            throw new RuntimeException("Question generation interrupted", ie);
+                        }
+                        retryCount++;
+                        continue;
+                    } else {
+                        log.error("Rate limit exceeded after {} retries. Please try again later.", maxRetries);
+                        throw new RuntimeException("Gemini API rate limit exceeded. Please wait a moment and try again.");
+                    }
+                } else if (errorMessage.contains("503") || errorMessage.contains("Service Unavailable")) {
+                    // Service temporarily unavailable, retry with backoff
+                    if (retryCount < maxRetries - 1) {
+                        long waitTime = initialWait * (long) Math.pow(2, retryCount);
+                        log.warn("Gemini API temporarily unavailable. Retry {} of {} after {}ms",
+                            retryCount + 1, maxRetries, waitTime);
+
+                        try {
+                            Thread.sleep(waitTime);
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            throw new RuntimeException("Question generation interrupted", ie);
+                        }
+                        retryCount++;
+                        continue;
+                    }
+                }
+
+                log.error("Error calling Gemini API: {}", errorMessage, e);
+                throw new RuntimeException("Failed to generate questions: " + errorMessage);
             }
-        } catch (Exception e) {
-            log.error("Error calling Gemini API: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to generate questions: " + e.getMessage());
         }
+
+        throw new RuntimeException("Failed to generate questions after " + maxRetries + " retries");
     }
 
     @SuppressWarnings("unchecked")
