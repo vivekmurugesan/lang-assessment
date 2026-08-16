@@ -159,10 +159,9 @@ public class QuestionGenerationController {
                 .questionText(question.getQuestionText())
                 .moduleType(question.getModuleType().toString())
                 .cefrLevel(question.getCefrLevel())
-                .options(question.getQuestionOptions() != null ?
-                        List.of(question.getQuestionOptions().split(",")) : null)
+                .options(null)
                 .correctAnswer(question.getCorrectAnswer())
-                .explanation(question.getExplanation())
+                .explanation(null)
                 .audioUrl(question.getAudioUrl())
                 .imageUrl(question.getImageUrl())
                 .status(question.getStatus().toString())

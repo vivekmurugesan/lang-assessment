@@ -178,7 +178,7 @@ public class EvaluationService {
     }
 
     private boolean isMultipleChoice(Question question) {
-        return question.getQuestionOptions() != null &&
+        return question.getQuestionOptionsUri() != null &&
                 (question.getModuleType() == Question.ModuleType.LISTENING ||
                  question.getModuleType() == Question.ModuleType.READING);
     }
