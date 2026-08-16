@@ -1,0 +1,2 @@
+-- This is a placeholder for the initial schema
+-- Actual schema is managed by Hibernate with ddl-auto: update
