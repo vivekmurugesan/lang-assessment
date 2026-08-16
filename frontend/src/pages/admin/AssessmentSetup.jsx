@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiPlus, FiEdit2, FiTrash2, FiChevronDown, FiChevronUp, FiWand2 } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiChevronDown, FiChevronUp, FiZap } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import api from '../../api/axiosConfig';
 
@@ -383,7 +383,7 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
               disabled={generating}
               className="btn btn-sm bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-gray-400 flex items-center gap-1"
             >
-              <FiWand2 size={14} /> {generating ? 'Generating...' : 'Generate Questions'}
+              <FiZap size={14} /> {generating ? 'Generating...' : 'Generate Questions'}
             </button>
             <button
               onClick={() => navigate(`/admin/questions/review/${assessment.id}`)}
