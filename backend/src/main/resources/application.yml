@@ -55,20 +55,22 @@ jwt:
   expiration: ${JWT_EXPIRATION:86400000}
 
 minio:
-  url: ${MINIO_URL:http://localhost:9000}
+  endpoint: ${MINIO_ENDPOINT:http://minio:9000}
   access-key: ${MINIO_ACCESS_KEY:minioadmin}
   secret-key: ${MINIO_SECRET_KEY:minioadmin123}
   bucket:
     assessments: ${MINIO_BUCKET_ASSESSMENTS:assessments}
     submissions: ${MINIO_BUCKET_SUBMISSIONS:submissions}
+    questions: ${MINIO_BUCKET_QUESTIONS:questions}
 
 evaluation:
   service-url: ${EVALUATION_SERVICE_URL:http://localhost:5000}
   timeout-seconds: 30
 
-ai:
-  gemini-api-key: ${GEMINI_API_KEY:}
-  default-model: gemini-pro
+gemini:
+  api:
+    key: ${GEMINI_API_KEY:}
+    url: https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent
 
 mail:
   host: ${MAIL_HOST:smtp.gmail.com}
