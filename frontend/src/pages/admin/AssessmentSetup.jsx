@@ -310,6 +310,7 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
         progress={progressModal.progress}
         message={progressModal.message}
         error={progressModal.error}
+        onClose={() => setProgressModal({ isOpen: false, status: 'generating', progress: 0, message: '', error: null })}
       />
       <div className="card">
         <div className="flex justify-between items-center cursor-pointer" onClick={onToggleExpand}>
