@@ -162,11 +162,27 @@ const AssessmentTaking = () => {
     );
   }
 
-  if (!assessment || questions.length === 0) {
+  if (!assessment) {
     return (
       <div className="p-6">
         <div className="card text-center py-12">
           <p className="text-gray-600">Assessment data not available</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (questions.length === 0) {
+    return (
+      <div className="p-6">
+        <div className="card text-center py-12">
+          <h2 className="text-xl font-bold text-gray-800 mb-3">No Questions Available</h2>
+          <p className="text-gray-600">
+            This assessment has not been configured with any modules yet.
+          </p>
+          <p className="text-sm text-gray-500 mt-2">
+            Please contact your administrator to set up the assessment modules.
+          </p>
         </div>
       </div>
     );
