@@ -252,8 +252,21 @@ public class QuestionGenerationService {
                         throw new RuntimeException("Gemini API request timed out after " + maxRetries + " retries. Please try again.");
                     }
                 } else if (isRateLimit) {
+                    // Check if this is a quota exhaustion (daily limit) rather than transient rate limit
+                    if (errorMessage.contains("quota") && errorMessage.contains("free_tier")) {
+                        log.error("Free tier daily quota exhausted. Quota resets daily at midnight UTC.");
+                        throw new RuntimeException("Gemini API free tier daily quota (20 requests/day) has been exceeded. Please try again tomorrow or upgrade to a paid plan.");
+                    }
+
                     if (retryCount < maxRetries - 1) {
-                        long waitTime = 1000 * (long) Math.pow(2, retryCount); // 1s, 2s, 4s, 8s, 16s
+                        // Try to extract retry delay from API response (e.g., "Please retry in 4.615s")
+                        long waitTime = extractRetryDelayFromError(errorMessage);
+
+                        if (waitTime == 0) {
+                            // Fallback to exponential backoff if no retry delay found
+                            waitTime = 1000 * (long) Math.pow(2, retryCount); // 1s, 2s, 4s, 8s, 16s
+                        }
+
                         log.warn("Rate limit hit on Gemini API. Retry {} of {} after {}ms. Error: {}",
                             retryCount + 1, maxRetries, waitTime, errorMessage);
 
@@ -295,6 +308,33 @@ public class QuestionGenerationService {
         }
 
         throw new RuntimeException("Failed to generate questions after " + maxRetries + " retries");
+    }
+
+    private long extractRetryDelayFromError(String errorMessage) {
+        try {
+            // Try to extract "Please retry in X.XXs" or "retryDelay": "Xs" from error message
+            // Format 1: "Please retry in 4.615208387s"
+            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("Please retry in ([0-9.]+)s");
+            java.util.regex.Matcher matcher = pattern.matcher(errorMessage);
+            if (matcher.find()) {
+                double seconds = Double.parseDouble(matcher.group(1));
+                // Add 500ms buffer to ensure we wait long enough
+                return (long) (seconds * 1000 + 500);
+            }
+
+            // Format 2: Look for "retryDelay": "4s" in JSON
+            if (errorMessage.contains("\"retryDelay\"")) {
+                java.util.regex.Pattern pattern2 = java.util.regex.Pattern.compile("\"retryDelay\"\\s*:\\s*\"([0-9]+)s\"");
+                java.util.regex.Matcher matcher2 = pattern2.matcher(errorMessage);
+                if (matcher2.find()) {
+                    long seconds = Long.parseLong(matcher2.group(1));
+                    return seconds * 1000 + 500; // Add 500ms buffer
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Could not extract retry delay from error message: {}", e.getMessage());
+        }
+        return 0; // Return 0 to trigger exponential backoff fallback
     }
 
     @SuppressWarnings("unchecked")
