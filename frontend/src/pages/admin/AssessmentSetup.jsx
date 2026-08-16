@@ -4,6 +4,7 @@ import { FiPlus, FiEdit2, FiTrash2, FiChevronDown, FiChevronUp, FiZap, FiHome } 
 import { toast } from 'react-toastify';
 import api from '../../api/axiosConfig';
 import GenerationProgressModal from '../../components/GenerationProgressModal';
+import ModuleConfigurationTable from '../../components/ModuleConfigurationTable';
 
 const AssessmentSetup = () => {
   const navigate = useNavigate();
@@ -182,7 +183,7 @@ const AssessmentSetup = () => {
 const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
   const navigate = useNavigate();
   const [modules, setModules] = useState([]);
-  const [showModuleForm, setShowModuleForm] = useState(false);
+  const [showModuleConfig, setShowModuleConfig] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [progressModal, setProgressModal] = useState({
     isOpen: false,
@@ -191,20 +192,6 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
     message: 'Initializing question generation...',
     error: null,
   });
-  const [moduleFormData, setModuleFormData] = useState({
-    moduleType: '',
-    numQuestions: 10,
-    difficultyLevel: 'INTERMEDIATE',
-    isEnabled: true,
-  });
-
-  const moduleTypes = [
-    'LISTENING',
-    'READING',
-    'SPOKEN_INTERACTION',
-    'SPOKEN_PRODUCTION',
-    'WRITING',
-  ];
 
   useEffect(() => {
     if (expanded) {
@@ -221,34 +208,9 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
     }
   };
 
-  const handleAddModule = async (e) => {
-    e.preventDefault();
-    try {
-      await api.post(`/admin/assessments/${assessment.id}/modules`, moduleFormData);
-      setModuleFormData({
-        moduleType: '',
-        numQuestions: 10,
-        difficultyLevel: 'INTERMEDIATE',
-        isEnabled: true,
-      });
-      setShowModuleForm(false);
-      loadModules();
-    } catch (error) {
-      console.error('Failed to add module:', error);
-    }
-  };
-
-  const handleDeleteModule = async (moduleId) => {
-    if (window.confirm('Are you sure you want to remove this module?')) {
-      try {
-        await api.delete(`/admin/assessments/${assessment.id}/modules/${moduleId}`);
-        toast.success('Module removed successfully');
-        loadModules();
-      } catch (error) {
-        console.error('Failed to delete module:', error);
-        toast.error('Failed to remove module. Please try again.');
-      }
-    }
+  const handleConfigurationChange = () => {
+    setShowModuleConfig(false);
+    loadModules();
   };
 
   const handleGenerateQuestions = async () => {
@@ -349,101 +311,52 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
 
           <div className="mb-4">
             <div className="flex justify-between items-center mb-3">
-              <h4 className="font-bold">Assessment Modules</h4>
+              <h4 className="font-bold text-lg">Assessment Modules</h4>
               <button
-                onClick={() => setShowModuleForm(!showModuleForm)}
+                onClick={() => setShowModuleConfig(!showModuleConfig)}
                 className="btn btn-sm btn-primary flex items-center gap-1"
               >
-                <FiPlus size={14} /> Add Module
+                <FiPlus size={14} /> {showModuleConfig ? 'Close Configuration' : 'Configure Modules'}
               </button>
             </div>
 
-            {showModuleForm && (
-              <form onSubmit={handleAddModule} className="bg-gray-50 p-4 rounded mb-3 space-y-3">
-                <select
-                  required
-                  value={moduleFormData.moduleType}
-                  onChange={(e) =>
-                    setModuleFormData({ ...moduleFormData, moduleType: e.target.value })
-                  }
-                  className="form-input"
-                >
-                  <option value="">Select Module Type</option>
-                  {moduleTypes.map((type) => (
-                    <option key={type} value={type}>
-                      {type.replace(/_/g, ' ')}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="number"
-                  min="1"
-                  value={moduleFormData.numQuestions}
-                  onChange={(e) =>
-                    setModuleFormData({
-                      ...moduleFormData,
-                      numQuestions: parseInt(e.target.value),
-                    })
-                  }
-                  className="form-input"
-                  placeholder="Number of Questions"
+            {showModuleConfig && (
+              <div className="mb-4">
+                <ModuleConfigurationTable
+                  assessmentId={assessment.id}
+                  existingModules={modules}
+                  onConfigurationChange={handleConfigurationChange}
                 />
-                <select
-                  value={moduleFormData.difficultyLevel}
-                  onChange={(e) =>
-                    setModuleFormData({
-                      ...moduleFormData,
-                      difficultyLevel: e.target.value,
-                    })
-                  }
-                  className="form-input"
-                >
-                  <option value="EASY">Easy</option>
-                  <option value="INTERMEDIATE">Intermediate</option>
-                  <option value="HARD">Hard</option>
-                </select>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={moduleFormData.isEnabled}
-                    onChange={(e) =>
-                      setModuleFormData({ ...moduleFormData, isEnabled: e.target.checked })
-                    }
-                  />
-                  Enabled
-                </label>
-                <div className="flex gap-2">
-                  <button type="submit" className="btn btn-primary btn-sm">
-                    Add Module
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowModuleForm(false)}
-                    className="btn btn-secondary btn-sm"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
+              </div>
             )}
 
             {modules.length === 0 ? (
-              <p className="text-gray-600 text-sm">No modules added yet</p>
+              <div className="bg-yellow-50 border border-yellow-200 rounded p-4 text-center">
+                <p className="text-gray-700 font-medium mb-2">No modules configured yet</p>
+                <p className="text-sm text-gray-600 mb-3">Click "Configure Modules" to set up your assessment</p>
+                <button
+                  onClick={() => setShowModuleConfig(true)}
+                  className="btn btn-sm btn-primary inline-flex items-center gap-1"
+                >
+                  <FiPlus size={14} /> Configure Modules
+                </button>
+              </div>
             ) : (
               <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-700 mb-2">Configured Modules:</p>
                 {modules.map((module) => (
                   <div key={module.id} className="flex justify-between items-center bg-gray-50 p-3 rounded">
                     <div>
-                      <p className="font-medium">{module.moduleType}</p>
+                      <p className="font-medium">{module.moduleType.replace(/_/g, ' ')}</p>
                       <p className="text-xs text-gray-600">
                         {module.numQuestions} questions • {module.difficultyLevel || 'Mixed'}
                       </p>
                     </div>
                     <button
-                      onClick={() => handleDeleteModule(module.id)}
-                      className="text-red-500 hover:text-red-700"
+                      onClick={() => setShowModuleConfig(true)}
+                      className="text-blue-500 hover:text-blue-700 text-sm font-medium"
                     >
-                      <FiTrash2 size={16} />
+                      Edit
                     </button>
                   </div>
                 ))}
