@@ -35,7 +35,7 @@ public class AssessmentSubmission {
     @Column(name = "total_score")
     private Double totalScore;
 
-    @Column(name = "cefr_level", length = 5)
+    @Column(name = "cefr_level", length = 20)
     private String cefrLevel;
 
     @Column(name = "evaluator_notes", columnDefinition = "TEXT")
