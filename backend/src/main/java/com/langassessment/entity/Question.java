@@ -31,7 +31,7 @@ public class Question {
     @Column(name = "module_type", nullable = false)
     private ModuleType moduleType;
 
-    @Column(nullable = false, length = 5)
+    @Column(nullable = false, length = 20)
     private String cefrLevel;
 
     @NotBlank
@@ -51,14 +51,14 @@ public class Question {
     @Column(name = "image_url", columnDefinition = "TEXT")
     private String imageUrl;
 
-    @Column(name = "question_options", columnDefinition = "TEXT")
-    private String questionOptions;
+    @Column(name = "question_options_uri", columnDefinition = "TEXT")
+    private String questionOptionsUri;
 
-    @Column(name = "correct_answer", length = 50)
+    @Column(name = "correct_answer", length = 100)
     private String correctAnswer;
 
-    @Column(name = "explanation", columnDefinition = "TEXT")
-    private String explanation;
+    @Column(name = "explanation_uri", columnDefinition = "TEXT")
+    private String explanationUri;
 
     @Column(name = "generated_at")
     private LocalDateTime generatedAt;

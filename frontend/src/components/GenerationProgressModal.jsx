@@ -52,10 +52,10 @@ const GenerationProgressModal = ({ isOpen, status, progress, message, error }) =
               <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
                 <div
                   className="bg-indigo-600 h-full transition-all duration-300 ease-out"
-                  style={{ width: `${progress}%` }}
+                  style={{ width: `${Math.round(progress)}%` }}
                 />
               </div>
-              <p className="text-xs text-gray-500 mt-2">{progress}%</p>
+              <p className="text-xs text-gray-500 mt-2">{Math.round(progress)}%</p>
             </div>
           )}
 
