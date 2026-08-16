@@ -268,7 +268,14 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
       }, 2000);
     } catch (error) {
       console.error('Failed to generate questions:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred';
+      let errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred';
+
+      // Provide specific guidance for common errors
+      if (error.response?.status === 403) {
+        errorMessage = 'You do not have permission to generate questions. Please ensure you have ADMIN or EVALUATOR role.';
+      } else if (errorMessage.includes('daily quota')) {
+        errorMessage += ' You can use a paid API key or wait until tomorrow (UTC midnight).';
+      }
 
       setProgressModal({
         isOpen: true,
@@ -283,6 +290,13 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
   };
 
   const handleSelectFromCatalog = async (moduleCounts) => {
+    // Validate that at least one module has questions selected
+    const hasValidCounts = Object.values(moduleCounts).some(count => count > 0);
+    if (!hasValidCounts) {
+      toast.error('Please select at least one question from the catalog');
+      return;
+    }
+
     setCatalogSelecting(true);
     setShowCatalogSelection(false);
 
@@ -296,7 +310,15 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
       setCatalogSelecting(false);
     } catch (error) {
       console.error('Failed to select questions from catalog:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred';
+      let errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred';
+
+      // Provide specific guidance for common errors
+      if (error.response?.status === 403) {
+        errorMessage = 'You do not have permission to select questions. Please ensure you have ADMIN or EVALUATOR role.';
+      } else if (errorMessage.includes('No approved questions')) {
+        errorMessage = 'No approved questions available in the catalog. Please generate and approve questions first.';
+      }
+
       toast.error(errorMessage);
       setCatalogSelecting(false);
     }
@@ -453,6 +475,12 @@ const CatalogSelectionModal = ({ modules, onConfirm, onClose }) => {
         <p className="text-gray-600 text-sm mb-4">
           Specify how many questions to select from the approved catalog for each module.
         </p>
+
+        <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-4">
+          <p className="text-xs text-blue-800">
+            <span className="font-medium">ℹ️ Note:</span> Make sure questions have been generated and approved in the catalog first.
+          </p>
+        </div>
 
         <div className="space-y-4 mb-6 max-h-80 overflow-y-auto">
           {modules.map((module) => (
