@@ -76,6 +76,25 @@ public class QuestionService {
         return questions.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public List<Question> getQuestionsByModuleAndLanguage(
+            Integer languageId,
+            String moduleType,
+            Integer limit) {
+        Language language = languageRepository.findById(languageId)
+                .orElseThrow(() -> new RuntimeException("Language not found"));
+
+        List<Question> questions = questionRepository.findByLanguageAndModuleTypeAndStatus(
+                language,
+                Question.ModuleType.valueOf(moduleType),
+                Question.QuestionStatus.ACTIVE
+        );
+
+        return questions.stream()
+                .limit(limit)
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     public Question updateQuestion(Integer id, QuestionDTO dto) {
         Question question = questionRepository.findById(id)

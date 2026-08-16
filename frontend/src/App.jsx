@@ -19,6 +19,7 @@ import EvaluationReview from './pages/admin/EvaluationReview';
 // Candidate Pages
 import CandidateHome from './pages/candidate/CandidateHome';
 import AssessmentTaking from './pages/candidate/AssessmentTaking';
+import AssessmentResults from './pages/candidate/AssessmentResults';
 
 // Common Components
 import PrivateRoute from './components/PrivateRoute';
@@ -63,8 +64,25 @@ function App() {
               <PrivateRoute role="CANDIDATE">
                 <Routes>
                   <Route path="/" element={<CandidateHome />} />
-                  <Route path="/assessment/:id" element={<AssessmentTaking />} />
                 </Routes>
+              </PrivateRoute>
+            }
+          />
+
+          {/* Assessment Routes (accessible to logged-in candidates) */}
+          <Route
+            path="/assessment/:secureLink"
+            element={
+              <PrivateRoute role="CANDIDATE">
+                <AssessmentTaking />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/assessment/:secureLink/results"
+            element={
+              <PrivateRoute role="CANDIDATE">
+                <AssessmentResults />
               </PrivateRoute>
             }
           />
