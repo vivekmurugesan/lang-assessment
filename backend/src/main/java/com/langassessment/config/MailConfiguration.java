@@ -1,5 +1,6 @@
 package com.langassessment.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,20 +12,31 @@ import java.util.Properties;
 @Configuration
 public class MailConfiguration {
 
+    @Value("${mail.host:}")
+    private String mailHost;
+
+    @Value("${mail.port:587}")
+    private int mailPort;
+
+    @Value("${mail.username:}")
+    private String mailUsername;
+
+    @Value("${mail.password:}")
+    private String mailPassword;
+
     @Bean
     @ConditionalOnProperty(name = "mail.host")
-    public JavaMailSender javaMailSender(
-            org.springframework.boot.autoconfigure.mail.MailProperties mailProperties) {
+    public JavaMailSender javaMailSender() {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
-        mailSender.setHost(mailProperties.getHost());
-        mailSender.setPort(mailProperties.getPort());
-        mailSender.setUsername(mailProperties.getUsername());
-        mailSender.setPassword(mailProperties.getPassword());
+        mailSender.setHost(mailHost);
+        mailSender.setPort(mailPort);
+        mailSender.setUsername(mailUsername);
+        mailSender.setPassword(mailPassword);
 
         Properties props = mailSender.getJavaMailProperties();
-        props.put("mail.smtp.auth", mailProperties.getProperties().getOrDefault("auth", "true"));
-        props.put("mail.smtp.starttls.enable", mailProperties.getProperties().getOrDefault("starttls.enable", "true"));
-        props.put("mail.smtp.starttls.required", mailProperties.getProperties().getOrDefault("starttls.required", "true"));
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.smtp.starttls.required", "true");
 
         return mailSender;
     }
