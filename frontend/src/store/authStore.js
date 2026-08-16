@@ -29,7 +29,7 @@ export const useAuthStore = create((set) => ({
 
   candidateLogin: async (secureLink, password) => {
     try {
-      const response = await api.post('/candidate/login', { secureLink, password });
+      const response = await api.post('/auth/candidate-login', { secureLink, password });
       const { data: { data: loginResponse } } = response;
 
       localStorage.setItem('token', loginResponse.token);
