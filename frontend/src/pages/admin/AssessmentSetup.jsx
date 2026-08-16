@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiPlus, FiEdit2, FiTrash2, FiChevronDown, FiChevronUp, FiZap } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiChevronDown, FiChevronUp, FiZap, FiHome } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import api from '../../api/axiosConfig';
+import GenerationProgressModal from '../../components/GenerationProgressModal';
 
 const AssessmentSetup = () => {
+  const navigate = useNavigate();
   const [assessments, setAssessments] = useState([]);
   const [languages, setLanguages] = useState([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -74,9 +76,18 @@ const AssessmentSetup = () => {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="page-title">Assessment Setup</h1>
-          <p className="page-subtitle">Create and configure language assessments</p>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate('/admin')}
+            className="btn btn-secondary flex items-center gap-2 hover:bg-gray-200"
+            title="Back to Admin Dashboard"
+          >
+            <FiHome size={18} /> Home
+          </button>
+          <div>
+            <h1 className="page-title">Assessment Setup</h1>
+            <p className="page-subtitle">Create and configure language assessments</p>
+          </div>
         </div>
         <button
           onClick={() => setShowCreateForm(!showCreateForm)}
@@ -173,6 +184,13 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
   const [modules, setModules] = useState([]);
   const [showModuleForm, setShowModuleForm] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [progressModal, setProgressModal] = useState({
+    isOpen: false,
+    status: 'generating', // 'generating', 'complete', 'error'
+    progress: 0,
+    message: 'Initializing question generation...',
+    error: null,
+  });
   const [moduleFormData, setModuleFormData] = useState({
     moduleType: '',
     numQuestions: 10,
@@ -240,21 +258,76 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
     }
 
     setGenerating(true);
+    setProgressModal({
+      isOpen: true,
+      status: 'generating',
+      progress: 10,
+      message: 'Preparing modules for generation...',
+      error: null,
+    });
+
     try {
+      // Simulate progress updates
+      const progressInterval = setInterval(() => {
+        setProgressModal((prev) => {
+          if (prev.progress < 80) {
+            return {
+              ...prev,
+              progress: prev.progress + Math.random() * 20,
+              message: 'Calling Gemini API to generate questions...',
+            };
+          }
+          return prev;
+        });
+      }, 1000);
+
       const response = await api.post(`/admin/questions/generate/${assessment.id}`);
-      toast.success(`Generated ${response.data.data?.length || 0} questions successfully!`);
-      navigate(`/admin/questions/review/${assessment.id}`);
+
+      clearInterval(progressInterval);
+
+      const questionCount = response.data.data?.length || 0;
+
+      setProgressModal({
+        isOpen: true,
+        status: 'complete',
+        progress: 100,
+        message: `Successfully generated ${questionCount} questions! Redirecting to review page...`,
+        error: null,
+      });
+
+      setTimeout(() => {
+        setProgressModal({ isOpen: false, status: 'generating', progress: 0, message: '', error: null });
+        setGenerating(false);
+        toast.success(`Generated ${questionCount} questions successfully!`);
+        navigate(`/admin/questions/review/${assessment.id}`);
+      }, 2000);
     } catch (error) {
       console.error('Failed to generate questions:', error);
-      toast.error('Failed to generate questions. Check backend logs for details.');
-    } finally {
+      const errorMessage = error.response?.data?.message || error.message || 'Unknown error occurred';
+
+      setProgressModal({
+        isOpen: true,
+        status: 'error',
+        progress: 0,
+        message: 'Question generation failed',
+        error: errorMessage,
+      });
+
       setGenerating(false);
     }
   };
 
   return (
-    <div className="card">
-      <div className="flex justify-between items-center cursor-pointer" onClick={onToggleExpand}>
+    <>
+      <GenerationProgressModal
+        isOpen={progressModal.isOpen}
+        status={progressModal.status}
+        progress={progressModal.progress}
+        message={progressModal.message}
+        error={progressModal.error}
+      />
+      <div className="card">
+        <div className="flex justify-between items-center cursor-pointer" onClick={onToggleExpand}>
         <div className="flex-1">
           <h3 className="font-bold text-lg">{assessment.title}</h3>
           <p className="text-sm text-gray-600">{assessment.languageName}</p>
@@ -400,7 +473,8 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 
