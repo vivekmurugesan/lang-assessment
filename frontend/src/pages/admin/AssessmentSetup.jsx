@@ -59,12 +59,14 @@ const AssessmentSetup = () => {
   };
 
   const handleDeleteAssessment = async (id) => {
-    if (window.confirm('Are you sure you want to delete this assessment?')) {
+    if (window.confirm('Are you sure you want to delete this assessment? This action cannot be undone.')) {
       try {
         await api.delete(`/assessments/${id}`);
+        toast.success('Assessment deleted successfully');
         loadAssessments();
       } catch (error) {
         console.error('Failed to delete assessment:', error);
+        toast.error('Failed to delete assessment. Please try again.');
       }
     }
   };
@@ -219,12 +221,14 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
   };
 
   const handleDeleteModule = async (moduleId) => {
-    if (window.confirm('Are you sure?')) {
+    if (window.confirm('Are you sure you want to remove this module?')) {
       try {
         await api.delete(`/admin/assessments/${assessment.id}/modules/${moduleId}`);
+        toast.success('Module removed successfully');
         loadModules();
       } catch (error) {
         console.error('Failed to delete module:', error);
+        toast.error('Failed to remove module. Please try again.');
       }
     }
   };
