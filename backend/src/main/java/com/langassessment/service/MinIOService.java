@@ -1,9 +1,11 @@
 package com.langassessment.service;
 
 import io.minio.GetObjectArgs;
+import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,8 +28,39 @@ public class MinIOService {
     @Value("${minio.bucket.questions:questions}")
     private String questionsBucket;
 
+    @Value("${minio.bucket.submissions:submissions}")
+    private String submissionsBucket;
+
     @Value("${minio.endpoint}")
     private String minioEndpoint;
+
+    @PostConstruct
+    public void initializeBuckets() {
+        initializeBucket(assessmentsBucket);
+        initializeBucket(questionsBucket);
+        initializeBucket(submissionsBucket);
+    }
+
+    private void initializeBucket(String bucketName) {
+        try {
+            if (!minioClient.bucketExists(
+                    io.minio.BucketExistsArgs.builder()
+                            .bucket(bucketName)
+                            .build()
+            )) {
+                minioClient.makeBucket(
+                        MakeBucketArgs.builder()
+                                .bucket(bucketName)
+                                .build()
+                );
+                log.info("Created MinIO bucket: {}", bucketName);
+            } else {
+                log.debug("MinIO bucket already exists: {}", bucketName);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to initialize MinIO bucket '{}': {}", bucketName, e.getMessage());
+        }
+    }
 
     public String uploadAudio(byte[] audioData, String fileName) {
         try {
