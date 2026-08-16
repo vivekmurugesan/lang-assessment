@@ -5,6 +5,7 @@ import com.langassessment.entity.Assessment;
 import com.langassessment.entity.AssessmentCandidate;
 import com.langassessment.entity.AssessmentModule;
 import com.langassessment.entity.Question;
+import com.langassessment.entity.QuestionResponse;
 import com.langassessment.entity.User;
 import com.langassessment.repository.AssessmentModuleRepository;
 import com.langassessment.service.*;
@@ -171,6 +172,39 @@ public class AssessmentCandidateAPIController {
             AssessmentCandidate candidate = candidateService.getCandidateBySecureLinkEntity(secureLink);
             var submission = submissionService.getSubmissionByCandidate(candidate.getId());
 
+            // Calculate total questions and correct answers
+            List<QuestionResponse> responses = submission.getResponses();
+            int totalQuestions = responses.size();
+            int correctAnswers = (int) responses.stream()
+                    .filter(r -> r.getScore() != null && r.getScore() > 0)
+                    .count();
+
+            // Calculate module performance
+            Assessment assessment = candidate.getAssessment();
+            List<AssessmentModule> modules = moduleRepository.findByAssessment(assessment);
+
+            List<AssessmentSubmissionDTO.ModulePerformanceDTO> modulePerformance = modules.stream()
+                    .map(module -> {
+                        List<QuestionResponse> moduleResponses = responses.stream()
+                                .filter(r -> r.getQuestion().getModuleType().toString()
+                                        .equals(module.getModuleType().toString()))
+                                .collect(Collectors.toList());
+
+                        int moduleTotal = moduleResponses.size();
+                        int moduleCorrect = (int) moduleResponses.stream()
+                                .filter(r -> r.getScore() != null && r.getScore() > 0)
+                                .count();
+                        double moduleScore = moduleTotal > 0 ? (moduleCorrect * 100.0 / moduleTotal) : 0;
+
+                        return AssessmentSubmissionDTO.ModulePerformanceDTO.builder()
+                                .moduleType(module.getModuleType().toString())
+                                .total(moduleTotal)
+                                .correct(moduleCorrect)
+                                .score(moduleScore)
+                                .build();
+                    })
+                    .collect(Collectors.toList());
+
             AssessmentSubmissionDTO dto = AssessmentSubmissionDTO.builder()
                     .id(submission.getId())
                     .assessmentCandidateId(submission.getAssessmentCandidate().getId())
@@ -178,6 +212,9 @@ public class AssessmentCandidateAPIController {
                     .totalScore(submission.getTotalScore())
                     .cefrLevel(submission.getCefrLevel())
                     .evaluatorNotes(submission.getEvaluatorNotes())
+                    .totalQuestions(totalQuestions)
+                    .correctAnswers(correctAnswers)
+                    .modulePerformance(modulePerformance)
                     .submittedAt(submission.getSubmittedAt())
                     .evaluatedAt(submission.getEvaluatedAt())
                     .build();
@@ -197,6 +234,10 @@ public class AssessmentCandidateAPIController {
                 .cefrLevel(question.getCefrLevel())
                 .questionText(question.getQuestionText())
                 .questionNumber(question.getQuestionNumber())
+                .audioUrl(question.getAudioUrl())
+                .imageUrl(question.getImageUrl())
+                .questionOptionsUri(question.getQuestionOptionsUri())
+                .explanationUri(question.getExplanationUri())
                 .build();
     }
 }

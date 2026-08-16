@@ -19,8 +19,22 @@ public class AssessmentSubmissionDTO {
     private Double totalScore;
     private String cefrLevel;
     private String evaluatorNotes;
+    private Integer totalQuestions;
+    private Integer correctAnswers;
+    private List<ModulePerformanceDTO> modulePerformance;
     private LocalDateTime createdAt;
     private LocalDateTime submittedAt;
     private LocalDateTime evaluatedAt;
     private List<QuestionResponseDTO> responses;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ModulePerformanceDTO {
+        private String moduleType;
+        private Integer total;
+        private Integer correct;
+        private Double score;
+    }
 }
