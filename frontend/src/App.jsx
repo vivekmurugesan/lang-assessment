@@ -10,6 +10,7 @@ import CandidateLoginPage from './pages/auth/CandidateLoginPage';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
+import QuestionCatalog from './pages/admin/QuestionCatalog';
 import AssessmentSetup from './pages/admin/AssessmentSetup';
 import QuestionReview from './pages/admin/QuestionReview';
 import CandidateOnboarding from './pages/admin/CandidateOnboarding';
@@ -48,6 +49,7 @@ function App() {
               <PrivateRoute role="ADMIN">
                 <Routes>
                   <Route path="/" element={<AdminDashboard />} />
+                  <Route path="/catalog" element={<QuestionCatalog />} />
                   <Route path="/assessments" element={<AssessmentSetup />} />
                   <Route path="/questions/review/:assessmentId" element={<QuestionReview />} />
                   <Route path="/onboarding" element={<CandidateOnboarding />} />

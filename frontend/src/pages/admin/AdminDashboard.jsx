@@ -10,6 +10,14 @@ const AdminDashboard = () => {
       </div>
 
       <div className="grid-3">
+        <Link to="/admin/catalog" className="card-hover">
+          <div className="flex items-center mb-4">
+            <div className="text-3xl">📚</div>
+            <h2 className="text-xl font-semibold ml-4">Question Catalog</h2>
+          </div>
+          <p className="text-gray-600">Review and approve questions for assessments</p>
+        </Link>
+
         <Link to="/admin/assessments" className="card-hover">
           <div className="flex items-center mb-4">
             <div className="text-3xl">📋</div>

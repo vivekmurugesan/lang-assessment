@@ -34,4 +34,41 @@ public interface QuestionRepository extends JpaRepository<Question, Integer> {
     );
 
     List<Question> findByStatusOrderByModuleTypeAsc(Question.QuestionStatus status);
+
+    // Catalog-related queries
+    List<Question> findByLanguageId(Integer languageId);
+
+    Page<Question> findByLanguageIdAndApprovalStatus(
+            Integer languageId,
+            Question.ApprovalStatus approvalStatus,
+            Pageable pageable
+    );
+
+    Page<Question> findByLanguageIdAndModuleTypeAndApprovalStatus(
+            Integer languageId,
+            Question.ModuleType moduleType,
+            Question.ApprovalStatus approvalStatus,
+            Pageable pageable
+    );
+
+    Page<Question> findByLanguageIdAndCatalogCategoryAndApprovalStatus(
+            Integer languageId,
+            String catalogCategory,
+            Question.ApprovalStatus approvalStatus,
+            Pageable pageable
+    );
+
+    Page<Question> findByLanguageIdAndModuleTypeAndApprovalStatusAndCatalogCategory(
+            Integer languageId,
+            Question.ModuleType moduleType,
+            Question.ApprovalStatus approvalStatus,
+            String catalogCategory,
+            Pageable pageable
+    );
+
+    List<Question> findByLanguageIdAndModuleTypeAndApprovalStatus(
+            Integer languageId,
+            Question.ModuleType moduleType,
+            Question.ApprovalStatus approvalStatus
+    );
 }

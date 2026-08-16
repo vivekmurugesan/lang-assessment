@@ -391,6 +391,8 @@ public class QuestionGenerationService {
                         .status(Question.QuestionStatus.PENDING_REVIEW)
                         .generatedAt(LocalDateTime.now())
                         .generatedBy("GEMINI_API")
+                        .catalogCategory("GENERAL")
+                        .approvalStatus(Question.ApprovalStatus.PENDING_REVIEW)
                         .build();
 
                 // Store question options in MinIO

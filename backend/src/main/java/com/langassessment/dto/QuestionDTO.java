@@ -20,6 +20,11 @@ public class QuestionDTO {
     private String questionText;
     private Integer questionNumber;
     private String status;
+    private String approvalStatus;
+    private String catalogCategory;
+    private String approvalNotes;
+    private String approvedBy;
+    private LocalDateTime approvedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

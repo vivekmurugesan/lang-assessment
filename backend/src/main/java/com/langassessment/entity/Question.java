@@ -80,6 +80,22 @@ public class Question {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "catalog_category", length = 50)
+    private String catalogCategory;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "approval_status", nullable = false)
+    private ApprovalStatus approvalStatus;
+
+    @Column(name = "approval_notes", columnDefinition = "TEXT")
+    private String approvalNotes;
+
+    @Column(name = "approved_by", length = 255)
+    private String approvedBy;
+
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt;
+
     public enum ModuleType {
         LISTENING,
         READING,
@@ -93,6 +109,12 @@ public class Question {
         INACTIVE,
         UNDER_REVIEW,
         PENDING_REVIEW,
+        REJECTED
+    }
+
+    public enum ApprovalStatus {
+        PENDING_REVIEW,
+        APPROVED,
         REJECTED
     }
 }
