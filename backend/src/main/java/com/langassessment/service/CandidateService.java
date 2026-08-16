@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -29,7 +30,7 @@ public class CandidateService {
     private final AssessmentRepository assessmentRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final EmailService emailService;
+    private final Optional<EmailService> emailService;
 
     @Transactional
     public AssessmentCandidate addCandidate(Integer assessmentId, String email, String name) {
@@ -60,10 +61,14 @@ public class CandidateService {
 
         AssessmentCandidate savedCandidate = assessmentCandidateRepository.save(candidate);
 
-        try {
-            emailService.sendCandidateInvitation(email, name, assessment.getTitle(), secureLink);
-        } catch (Exception e) {
-            log.warn("Email sending failed for candidate {}, but candidate was created: {}", email, e.getMessage());
+        if (emailService.isPresent()) {
+            try {
+                emailService.get().sendCandidateInvitation(email, name, assessment.getTitle(), secureLink);
+            } catch (Exception e) {
+                log.warn("Email sending failed for candidate {}, but candidate was created: {}", email, e.getMessage());
+            }
+        } else {
+            log.info("Email service not configured, skipping invitation email for candidate: {}", email);
         }
 
         return savedCandidate;
@@ -125,15 +130,19 @@ public class CandidateService {
         candidate.setSecureLink(newSecureLink);
         assessmentCandidateRepository.save(candidate);
 
-        try {
-            emailService.sendCandidateInvitation(
-                    candidate.getUser().getEmail(),
-                    candidate.getUser().getName(),
-                    candidate.getAssessment().getTitle(),
-                    newSecureLink
-            );
-        } catch (Exception e) {
-            log.warn("Email resend failed for candidate {}, but secure link was updated: {}", candidateId, e.getMessage());
+        if (emailService.isPresent()) {
+            try {
+                emailService.get().sendCandidateInvitation(
+                        candidate.getUser().getEmail(),
+                        candidate.getUser().getName(),
+                        candidate.getAssessment().getTitle(),
+                        newSecureLink
+                );
+            } catch (Exception e) {
+                log.warn("Email resend failed for candidate {}, but secure link was updated: {}", candidateId, e.getMessage());
+            }
+        } else {
+            log.info("Email service not configured, skipping resend email for candidate: {}", candidateId);
         }
 
         log.info("Invitation resent for candidate: {}", candidateId);
