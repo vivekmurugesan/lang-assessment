@@ -39,11 +39,15 @@ public class EmailService {
     }
 
     private String buildEmailBody(String candidateName, String assessmentTitle, String assessmentLink, String tempPassword) {
+        String candidateLoginLink = appBaseUrl + "/candidate-login?secureLink=" + assessmentLink.split("/assessment/")[1];
         return "Dear " + candidateName + ",\n\n" +
                 "You have been invited to take the '" + assessmentTitle + "' language assessment.\n\n" +
-                "Click the link below to begin:\n" +
-                assessmentLink + "\n\n" +
-                "Use the following temporary password to log in:\n" +
+                "Click the link below to access the assessment:\n" +
+                candidateLoginLink + "\n\n" +
+                "If the link doesn't work, you can manually log in at:\n" +
+                appBaseUrl + "/candidate-login\n\n" +
+                "Your credentials:\n" +
+                "Secure Link: " + assessmentLink.split("/assessment/")[1] + "\n" +
                 "Password: " + tempPassword + "\n\n" +
                 "The assessment evaluates your language proficiency according to the CEFR framework (A1-C2 levels).\n\n" +
                 "If you have any questions, please contact the assessment administrator.\n\n" +

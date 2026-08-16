@@ -1,16 +1,27 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { toast } from 'react-toastify';
 
 const CandidateLoginPage = () => {
   const navigate = useNavigate();
   const { candidateLogin } = useAuthStore();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    secureLink: '',
+    secureLink: searchParams.get('secureLink') || '',
     password: '',
   });
+
+  useEffect(() => {
+    const secureLink = searchParams.get('secureLink');
+    if (secureLink) {
+      setFormData(prev => ({
+        ...prev,
+        secureLink
+      }));
+    }
+  }, [searchParams]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
