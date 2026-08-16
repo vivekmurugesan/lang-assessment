@@ -30,6 +30,19 @@ const AssessmentTaking = () => {
         api.post(`/candidate/assessments/${secureLink}/start`)
       ]);
 
+      console.log('Assessment Response:', assessmentRes);
+      console.log('Questions Response:', questionsRes);
+      console.log('Start Response:', startRes);
+
+      if (!assessmentRes.data.success || !questionsRes.data.success || !startRes.data.success) {
+        console.error('API returned error:',
+          assessmentRes.data.message || questionsRes.data.message || startRes.data.message
+        );
+        toast.error('Failed to load assessment data');
+        setLoading(false);
+        return;
+      }
+
       setAssessment(assessmentRes.data.data);
       setQuestions(questionsRes.data.data || []);
       setSubmission(startRes.data.data);
