@@ -96,7 +96,25 @@ public class MinIOService {
         }
     }
 
-    private String getObjectUrl(String bucket, String objectName) {
+    public String uploadFile(String bucket, String objectName, InputStream inputStream, long size) {
+        try {
+            minioClient.putObject(
+                    PutObjectArgs.builder()
+                            .bucket(bucket)
+                            .object(objectName)
+                            .stream(inputStream, size, -1)
+                            .contentType("application/json")
+                            .build()
+            );
+            log.info("File uploaded to MinIO: {}/{}", bucket, objectName);
+            return getObjectUrl(bucket, objectName);
+        } catch (Exception e) {
+            log.error("Failed to upload file to MinIO: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to upload file: " + e.getMessage());
+        }
+    }
+
+    public String getObjectUrl(String bucket, String objectName) {
         return String.format("%s/%s/%s", minioEndpoint.replaceAll("/$", ""), bucket, objectName);
     }
 
