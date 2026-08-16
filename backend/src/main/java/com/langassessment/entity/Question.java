@@ -63,13 +63,13 @@ public class Question {
     @Column(name = "generated_at")
     private LocalDateTime generatedAt;
 
-    @Column(name = "generated_by", length = 50)
+    @Column(name = "generated_by", length = 255)
     private String generatedBy;
 
     @Column(name = "review_notes", columnDefinition = "TEXT")
     private String reviewNotes;
 
-    @Column(name = "assessed_by", length = 50)
+    @Column(name = "assessed_by", length = 255)
     private String assessedBy;
 
     @CreationTimestamp
