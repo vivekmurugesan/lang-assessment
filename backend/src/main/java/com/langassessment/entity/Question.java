@@ -54,7 +54,7 @@ public class Question {
     @Column(name = "question_options_uri", columnDefinition = "TEXT")
     private String questionOptionsUri;
 
-    @Column(name = "correct_answer", length = 100)
+    @Column(name = "correct_answer", columnDefinition = "TEXT")
     private String correctAnswer;
 
     @Column(name = "explanation_uri", columnDefinition = "TEXT")
