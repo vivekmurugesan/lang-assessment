@@ -20,7 +20,7 @@ public class EmailService {
     @Value("${app.base-url:http://localhost:3000}")
     private String appBaseUrl;
 
-    public void sendCandidateInvitation(String candidateEmail, String candidateName, String assessmentTitle, String secureLink) {
+    public void sendCandidateInvitation(String candidateEmail, String candidateName, String assessmentTitle, String secureLink, String tempPassword) {
         try {
             String assessmentLink = appBaseUrl + "/assessment/" + secureLink;
 
@@ -28,7 +28,7 @@ public class EmailService {
             message.setFrom(fromEmail);
             message.setTo(candidateEmail);
             message.setSubject("Language Assessment Invitation: " + assessmentTitle);
-            message.setText(buildEmailBody(candidateName, assessmentTitle, assessmentLink));
+            message.setText(buildEmailBody(candidateName, assessmentTitle, assessmentLink, tempPassword));
 
             mailSender.send(message);
             log.info("Invitation email sent successfully to: {}", candidateEmail);
@@ -38,11 +38,13 @@ public class EmailService {
         }
     }
 
-    private String buildEmailBody(String candidateName, String assessmentTitle, String assessmentLink) {
+    private String buildEmailBody(String candidateName, String assessmentTitle, String assessmentLink, String tempPassword) {
         return "Dear " + candidateName + ",\n\n" +
                 "You have been invited to take the '" + assessmentTitle + "' language assessment.\n\n" +
                 "Click the link below to begin:\n" +
                 assessmentLink + "\n\n" +
+                "Use the following temporary password to log in:\n" +
+                "Password: " + tempPassword + "\n\n" +
                 "The assessment evaluates your language proficiency according to the CEFR framework (A1-C2 levels).\n\n" +
                 "If you have any questions, please contact the assessment administrator.\n\n" +
                 "Best regards,\n" +

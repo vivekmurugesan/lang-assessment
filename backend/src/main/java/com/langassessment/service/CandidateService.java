@@ -63,7 +63,7 @@ public class CandidateService {
 
         if (emailService.isPresent()) {
             try {
-                emailService.get().sendCandidateInvitation(email, name, assessment.getTitle(), secureLink);
+                emailService.get().sendCandidateInvitation(email, name, assessment.getTitle(), secureLink, tempPassword);
             } catch (Exception e) {
                 log.warn("Email sending failed for candidate {}, but candidate was created: {}", email, e.getMessage());
             }
@@ -127,7 +127,10 @@ public class CandidateService {
         AssessmentCandidate candidate = assessmentCandidateRepository.findById(candidateId)
                 .orElseThrow(() -> new RuntimeException("Candidate not found"));
         String newSecureLink = UUID.randomUUID().toString();
+        String newTempPassword = UUID.randomUUID().toString().substring(0, 8);
+
         candidate.setSecureLink(newSecureLink);
+        candidate.setTempPassword(passwordEncoder.encode(newTempPassword));
         assessmentCandidateRepository.save(candidate);
 
         if (emailService.isPresent()) {
@@ -136,10 +139,11 @@ public class CandidateService {
                         candidate.getUser().getEmail(),
                         candidate.getUser().getName(),
                         candidate.getAssessment().getTitle(),
-                        newSecureLink
+                        newSecureLink,
+                        newTempPassword
                 );
             } catch (Exception e) {
-                log.warn("Email resend failed for candidate {}, but secure link was updated: {}", candidateId, e.getMessage());
+                log.warn("Email resend failed for candidate {}, but secure link and password were updated: {}", candidateId, e.getMessage());
             }
         } else {
             log.info("Email service not configured, skipping resend email for candidate: {}", candidateId);
