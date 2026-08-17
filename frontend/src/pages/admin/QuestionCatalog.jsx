@@ -78,11 +78,24 @@ const QuestionCatalog = () => {
     }
   };
 
+  const getUserEmail = () => {
+    try {
+      const userStr = localStorage.getItem('user');
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        return user.email || user.username || 'Unknown User';
+      }
+    } catch (error) {
+      console.error('Failed to parse user from localStorage:', error);
+    }
+    return null;
+  };
+
   const handleApprove = async (questionId) => {
     try {
-      const userEmail = localStorage.getItem('userEmail');
+      const userEmail = getUserEmail();
       if (!userEmail) {
-        toast.error('User email not found. Please log in again.');
+        toast.error('User information not found. Please log in again.');
         return;
       }
 
@@ -107,9 +120,9 @@ const QuestionCatalog = () => {
     if (!reason) return;
 
     try {
-      const userEmail = localStorage.getItem('userEmail');
+      const userEmail = getUserEmail();
       if (!userEmail) {
-        toast.error('User email not found. Please log in again.');
+        toast.error('User information not found. Please log in again.');
         return;
       }
 
