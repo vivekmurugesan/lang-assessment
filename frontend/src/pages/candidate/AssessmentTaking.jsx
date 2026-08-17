@@ -94,8 +94,6 @@ const AssessmentTaking = () => {
     }
   };
 
-  const currentQuestion = questions[currentQuestionIndex];
-
   const handleResponseChange = (value, type = 'text') => {
     setResponses(prev => ({
       ...prev,
