@@ -31,34 +31,9 @@ const QuestionReview = () => {
     }
   };
 
-  const handleApprove = async () => {
-    try {
-      const question = questions[currentIndex];
-      await api.post(`/admin/questions/${question.id}/approve`, {
-        notes: reviewNotes
-      });
-      toast.success('Question approved');
-      handleNext();
-    } catch (error) {
-      toast.error('Failed to approve question');
-    }
-  };
-
-  const handleReject = async () => {
-    if (!rejectionReason.trim()) {
-      toast.error('Please provide a reason for rejection');
-      return;
-    }
-    try {
-      const question = questions[currentIndex];
-      await api.post(`/admin/questions/${question.id}/reject`, {
-        reason: rejectionReason
-      });
-      toast.success('Question rejected');
-      handleNext();
-    } catch (error) {
-      toast.error('Failed to reject question');
-    }
+  const handleGoToCatalog = () => {
+    navigate('/admin/catalog');
+    toast.info('Please review and approve these questions in the Catalog');
   };
 
   const handleNext = () => {
@@ -105,8 +80,8 @@ const QuestionReview = () => {
       </button>
 
       <div className="mb-6">
-        <h1 className="page-title">Review Generated Questions</h1>
-        <p className="page-subtitle">Question {currentIndex + 1} of {questions.length}</p>
+        <h1 className="page-title">Preview Generated Questions</h1>
+        <p className="page-subtitle">Question {currentIndex + 1} of {questions.length} • Go to Catalog to approve/reject</p>
       </div>
 
       <div className="mb-4">
@@ -197,43 +172,39 @@ const QuestionReview = () => {
 
         <div className="lg:col-span-1">
           <div className="card p-6 sticky top-6">
-            <h3 className="font-bold text-lg mb-4">Review Actions</h3>
-
-            <button
-              onClick={handleApprove}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 mb-3 bg-green-600 text-white rounded hover:bg-green-700 font-medium"
-            >
-              <FiCheck size={18} />
-              Approve Question
-            </button>
-
-            <div className="border-t my-4"></div>
-
-            <label className="block text-sm font-medium mb-2">Rejection Reason (if rejecting)</label>
-            <textarea
-              value={rejectionReason}
-              onChange={(e) => setRejectionReason(e.target.value)}
-              placeholder="Explain why this question should be rejected..."
-              className="form-input min-h-24 text-sm mb-3"
-            />
-
-            <button
-              onClick={handleReject}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white rounded hover:bg-red-700 font-medium"
-            >
-              <FiX size={18} />
-              Reject Question
-            </button>
-
-            {currentIndex < questions.length - 1 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <h3 className="font-bold text-blue-900 mb-2">ℹ️ Approval Workflow</h3>
+              <p className="text-sm text-blue-800 mb-3">
+                Questions are reviewed and approved in the <strong>Question Catalog</strong>, not here.
+              </p>
               <button
-                onClick={handleNext}
-                className="w-full mt-4 flex items-center justify-center gap-2 px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                onClick={handleGoToCatalog}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 font-medium text-sm"
               >
-                <FiArrowLeft size={16} />
-                Skip to Next
+                Go to Catalog
               </button>
-            )}
+            </div>
+
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <h3 className="font-bold text-green-900 mb-2">✓ This Page</h3>
+              <p className="text-sm text-green-800 mb-3">
+                Preview of generated questions. Use the Catalog page to:
+              </p>
+              <ul className="text-sm text-green-800 space-y-1 mb-3">
+                <li>✓ Approve questions</li>
+                <li>✓ Reject questions</li>
+                <li>✓ Add feedback</li>
+              </ul>
+
+              {currentIndex < questions.length - 1 && (
+                <button
+                  onClick={handleNext}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 text-sm"
+                >
+                  Next Question
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

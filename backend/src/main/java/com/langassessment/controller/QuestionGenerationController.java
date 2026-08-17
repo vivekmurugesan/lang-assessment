@@ -17,6 +17,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -98,6 +99,49 @@ public class QuestionGenerationController {
             return ResponseEntity.ok(new AuthDTO.ApiResponse<>(true, "Questions retrieved", dtos));
         } catch (Exception e) {
             log.error("Failed to retrieve questions: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(new AuthDTO.ApiResponse<>(false, e.getMessage()));
+        }
+    }
+
+    @GetMapping("/assessments/{assessmentId}/status")
+    @Transactional(readOnly = true)
+    public ResponseEntity<AuthDTO.ApiResponse<Map<String, Object>>> getAssessmentQuestionStatus(
+            @PathVariable Integer assessmentId) {
+        try {
+            Assessment assessment = assessmentRepository.findById(assessmentId)
+                    .orElseThrow(() -> new RuntimeException("Assessment not found"));
+
+            // Get all questions for this assessment's language and modules
+            List<AssessmentModule> modules = moduleRepository.findByAssessment(assessment);
+            List<String> moduleTypes = modules.stream()
+                    .map(m -> m.getModuleType().toString())
+                    .collect(Collectors.toList());
+
+            List<Question> allQuestions = questionRepository.findByLanguageId(assessment.getLanguage().getId()).stream()
+                    .filter(q -> moduleTypes.contains(q.getModuleType().toString()))
+                    .collect(Collectors.toList());
+
+            long generated = allQuestions.size();
+            long approved = allQuestions.stream()
+                    .filter(q -> q.getApprovalStatus() == Question.ApprovalStatus.APPROVED)
+                    .count();
+            long rejected = allQuestions.stream()
+                    .filter(q -> q.getApprovalStatus() == Question.ApprovalStatus.REJECTED)
+                    .count();
+            long pending = allQuestions.stream()
+                    .filter(q -> q.getApprovalStatus() == Question.ApprovalStatus.PENDING_REVIEW)
+                    .count();
+
+            Map<String, Object> status = new HashMap<>();
+            status.put("generated", generated);
+            status.put("approved", approved);
+            status.put("rejected", rejected);
+            status.put("pending", pending);
+
+            return ResponseEntity.ok(new AuthDTO.ApiResponse<>(true, "Assessment status retrieved", status));
+        } catch (Exception e) {
+            log.error("Failed to get assessment status: {}", e.getMessage());
             return ResponseEntity.badRequest()
                     .body(new AuthDTO.ApiResponse<>(false, e.getMessage()));
         }
