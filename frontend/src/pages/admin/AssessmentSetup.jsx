@@ -317,7 +317,7 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
 
     try {
       await api.post(
-        `/admin/questions/assessments/${assessment.id}/select-questions`,
+        `/admin/questions/catalog/assessments/${assessment.id}/select-questions`,
         moduleCounts
       );
 
@@ -372,7 +372,7 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
 
           {questionStatus && (
             <div className="mb-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 <div className="bg-blue-50 border border-blue-200 rounded p-3">
                   <p className="text-xs text-gray-600">Generated</p>
                   <p className="text-2xl font-bold text-blue-600">{questionStatus.generated || 0}</p>
@@ -380,6 +380,10 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
                 <div className="bg-green-50 border border-green-200 rounded p-3">
                   <p className="text-xs text-gray-600">Approved</p>
                   <p className="text-2xl font-bold text-green-600">{questionStatus.approved || 0}</p>
+                </div>
+                <div className="bg-purple-50 border border-purple-200 rounded p-3">
+                  <p className="text-xs text-gray-600">Selected</p>
+                  <p className="text-2xl font-bold text-purple-600">{questionStatus.selected || 0}</p>
                 </div>
                 <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
                   <p className="text-xs text-gray-600">Pending</p>
@@ -393,6 +397,11 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
               {questionStatus.pending > 0 && (
                 <div className="mt-3 text-xs text-yellow-700 bg-yellow-50 p-2 rounded border border-yellow-200">
                   ⚠️ {questionStatus.pending} questions pending review in Catalog
+                </div>
+              )}
+              {questionStatus.selected > 0 && (
+                <div className="mt-2 text-xs text-purple-700 bg-purple-50 p-2 rounded border border-purple-200">
+                  ✓ {questionStatus.selected} questions selected and ready for candidates
                 </div>
               )}
             </div>
