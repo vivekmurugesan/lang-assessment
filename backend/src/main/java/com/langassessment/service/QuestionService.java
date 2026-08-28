@@ -5,6 +5,7 @@ import com.langassessment.entity.Language;
 import com.langassessment.entity.Question;
 import com.langassessment.repository.LanguageRepository;
 import com.langassessment.repository.QuestionRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -12,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.InputStream;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,6 +24,8 @@ public class QuestionService {
 
     private final QuestionRepository questionRepository;
     private final LanguageRepository languageRepository;
+    private final StorageService storageService;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public Question createQuestion(QuestionDTO dto) {
@@ -135,6 +139,71 @@ public class QuestionService {
     @Transactional
     public void deleteQuestion(Integer id) {
         questionRepository.deleteById(id);
+    }
+
+    @Transactional(readOnly = true)
+    public Question getQuestionById(Integer id) {
+        return questionRepository.findById(id).orElse(null);
+    }
+
+    public Object fetchQuestionOptions(String questionOptionsUri) {
+        try {
+            if (questionOptionsUri == null || questionOptionsUri.isEmpty()) {
+                return null;
+            }
+
+            // Extract object name from MinIO URL
+            String objectName = extractObjectNameFromUrl(questionOptionsUri);
+            InputStream inputStream = storageService.downloadFile(objectName, "assessment");
+
+            // Read JSON content
+            return objectMapper.readValue(inputStream, Object.class);
+        } catch (Exception e) {
+            log.error("Failed to fetch question options: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    public byte[] fetchAudioContent(String audioUrl) {
+        try {
+            if (audioUrl == null || audioUrl.isEmpty()) {
+                return new byte[0];
+            }
+
+            // Extract object name from MinIO URL
+            String objectName = extractObjectNameFromUrl(audioUrl);
+            InputStream inputStream = storageService.downloadFile(objectName, "assessment");
+
+            // Read bytes
+            return inputStream.readAllBytes();
+        } catch (Exception e) {
+            log.error("Failed to fetch audio content: {}", e.getMessage());
+            return new byte[0];
+        }
+    }
+
+    private String extractObjectNameFromUrl(String url) {
+        // URL format: http://minio:9000/bucket/path/to/object
+        // or: minio:9000/bucket/path/to/object
+        if (url == null || url.isEmpty()) {
+            return url;
+        }
+
+        // Remove protocol if present
+        String urlWithoutProtocol = url.replaceAll("^https?://", "");
+
+        // Remove host and port
+        if (urlWithoutProtocol.contains("/")) {
+            int slashIndex = urlWithoutProtocol.indexOf("/");
+            String afterHost = urlWithoutProtocol.substring(slashIndex + 1);
+
+            // Remove bucket name (first part before next slash)
+            if (afterHost.contains("/")) {
+                int nextSlash = afterHost.indexOf("/");
+                return afterHost.substring(nextSlash + 1);
+            }
+        }
+        return url;
     }
 
     private QuestionDTO convertToDTO(Question question) {

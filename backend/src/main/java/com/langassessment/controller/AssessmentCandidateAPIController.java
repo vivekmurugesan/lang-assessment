@@ -123,6 +123,47 @@ public class AssessmentCandidateAPIController {
         }
     }
 
+    @GetMapping("/questions/{questionId}/options")
+    @Transactional(readOnly = true)
+    public ResponseEntity<AuthDTO.ApiResponse<Object>> getQuestionOptions(
+            @PathVariable Integer questionId) {
+        try {
+            Question question = questionService.getQuestionById(questionId);
+            if (question == null) {
+                return ResponseEntity.badRequest()
+                        .body(new AuthDTO.ApiResponse<>(false, "Question not found"));
+            }
+
+            // Fetch options from MinIO through the service
+            Object options = questionService.fetchQuestionOptions(question.getQuestionOptionsUri());
+            return ResponseEntity.ok(new AuthDTO.ApiResponse<>(true, "Options retrieved", options));
+        } catch (Exception e) {
+            log.error("Failed to retrieve question options: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(new AuthDTO.ApiResponse<>(false, "Failed to load options"));
+        }
+    }
+
+    @GetMapping("/questions/{questionId}/audio")
+    @Transactional(readOnly = true)
+    public ResponseEntity<byte[]> getQuestionAudio(
+            @PathVariable Integer questionId) {
+        try {
+            Question question = questionService.getQuestionById(questionId);
+            if (question == null || question.getAudioUrl() == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            byte[] audioData = questionService.fetchAudioContent(question.getAudioUrl());
+            return ResponseEntity.ok()
+                    .header("Content-Type", "audio/mpeg")
+                    .body(audioData);
+        } catch (Exception e) {
+            log.error("Failed to retrieve audio: {}", e.getMessage());
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @PostMapping("/submissions/{submissionId}/responses")
     public ResponseEntity<AuthDTO.ApiResponse<QuestionResponseDTO>> saveResponse(
             @PathVariable Integer submissionId,
