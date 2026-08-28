@@ -4,6 +4,7 @@ import com.langassessment.dto.*;
 import com.langassessment.entity.Assessment;
 import com.langassessment.entity.AssessmentCandidate;
 import com.langassessment.entity.AssessmentModule;
+import com.langassessment.entity.AssessmentSubmission;
 import com.langassessment.entity.Question;
 import com.langassessment.entity.QuestionResponse;
 import com.langassessment.entity.User;
