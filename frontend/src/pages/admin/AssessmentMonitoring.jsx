@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FiRefreshCw, FiEye, FiMail, FiCheckCircle, FiClock, FiHome } from 'react-icons/fi';
+import { FiRefreshCw, FiEye, FiMail, FiCheckCircle, FiClock, FiHome, FiX } from 'react-icons/fi';
+import { toast } from 'react-toastify';
 import api from '../../api/axiosConfig';
 
 const AssessmentMonitoring = () => {
@@ -9,6 +10,12 @@ const AssessmentMonitoring = () => {
   const [selectedAssessment, setSelectedAssessment] = useState(null);
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [selectedSubmission, setSelectedSubmission] = useState(null);
+  const [submissionDetails, setSubmissionDetails] = useState(null);
+  const [loadingSubmission, setLoadingSubmission] = useState(false);
+  const [evaluatorNotes, setEvaluatorNotes] = useState('');
+  const [responseScores, setResponseScores] = useState({});
   const [stats, setStats] = useState({
     totalCandidates: 0,
     invited: 0,
@@ -70,6 +77,63 @@ const AssessmentMonitoring = () => {
     } catch (error) {
       console.error('Failed to resend invitation:', error);
       alert('Failed to resend invitation');
+    }
+  };
+
+  const openSubmissionReview = async (candidate) => {
+    setSelectedSubmission(candidate);
+    setLoadingSubmission(true);
+    setShowReviewModal(true);
+    try {
+      const response = await api.get(`/admin/submissions`);
+      const submission = response.data.data.content.find(s =>
+        s.assessmentCandidateId === candidate.id
+      );
+
+      if (submission && submission.id) {
+        const detailsResponse = await api.get(`/admin/submissions/${submission.id}`);
+        setSubmissionDetails(detailsResponse.data.data);
+        setEvaluatorNotes(detailsResponse.data.data.evaluatorNotes || '');
+
+        // Initialize response scores
+        const scores = {};
+        if (detailsResponse.data.data.responses) {
+          detailsResponse.data.data.responses.forEach(r => {
+            scores[r.id] = r.score || 0;
+          });
+        }
+        setResponseScores(scores);
+      }
+    } catch (error) {
+      console.error('Failed to load submission details:', error);
+      toast.error('Failed to load submission details');
+      setShowReviewModal(false);
+    } finally {
+      setLoadingSubmission(false);
+    }
+  };
+
+  const handleScoreChange = (responseId, score) => {
+    setResponseScores(prev => ({
+      ...prev,
+      [responseId]: parseFloat(score)
+    }));
+  };
+
+  const saveEvaluation = async () => {
+    if (!submissionDetails) return;
+
+    try {
+      await api.post(`/admin/submissions/${submissionDetails.id}/evaluate`, {
+        responseScores,
+        evaluatorNotes
+      });
+      toast.success('Submission evaluated successfully');
+      setShowReviewModal(false);
+      loadCandidates(selectedAssessment);
+    } catch (error) {
+      console.error('Failed to save evaluation:', error);
+      toast.error('Failed to save evaluation');
     }
   };
 
@@ -247,8 +311,18 @@ const AssessmentMonitoring = () => {
                                     Resend
                                   </button>
                                 )}
+                                {candidate.status === 'COMPLETED' && (
+                                  <button
+                                    onClick={() => openSubmissionReview(candidate)}
+                                    className="text-orange-600 hover:text-orange-800 text-sm font-medium flex items-center gap-1"
+                                    title="Review and evaluate submission"
+                                  >
+                                    <FiEye size={14} /> Review
+                                  </button>
+                                )}
                                 {candidate.status === 'EVALUATED' && (
                                   <button
+                                    onClick={() => openSubmissionReview(candidate)}
                                     className="text-green-600 hover:text-green-800 text-sm font-medium flex items-center gap-1"
                                     title="View evaluation"
                                   >
@@ -267,6 +341,121 @@ const AssessmentMonitoring = () => {
             </>
           )}
         </>
+      )}
+
+      {/* Review Modal */}
+      {showReviewModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg max-w-4xl w-full max-h-96 overflow-y-auto">
+            <div className="flex justify-between items-center p-6 border-b sticky top-0 bg-white">
+              <h2 className="text-xl font-bold">
+                Review Submission - {selectedSubmission?.name}
+              </h2>
+              <button
+                onClick={() => setShowReviewModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <FiX size={24} />
+              </button>
+            </div>
+
+            {loadingSubmission ? (
+              <div className="p-6 text-center">Loading submission details...</div>
+            ) : submissionDetails ? (
+              <div className="p-6 space-y-6">
+                {/* Submission Summary */}
+                <div className="bg-gray-50 p-4 rounded">
+                  <div className="grid grid-cols-4 gap-4">
+                    <div>
+                      <p className="text-sm text-gray-600">Total Questions</p>
+                      <p className="text-2xl font-bold">{submissionDetails.totalQuestions}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Correct Answers</p>
+                      <p className="text-2xl font-bold text-green-600">{submissionDetails.correctAnswers}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Score</p>
+                      <p className="text-2xl font-bold">{submissionDetails.totalScore ? submissionDetails.totalScore.toFixed(2) : 'N/A'}%</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">CEFR Level</p>
+                      <p className="text-2xl font-bold text-indigo-600">{submissionDetails.cefrLevel || 'Pending'}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Responses */}
+                <div>
+                  <h3 className="font-bold mb-3">Responses</h3>
+                  <div className="space-y-4">
+                    {submissionDetails.responses?.map((response, idx) => (
+                      <div key={response.id} className="border rounded p-4">
+                        <div className="mb-2">
+                          <p className="font-medium">Q{idx + 1}: {response.questionText}</p>
+                          <p className="text-sm text-gray-600">{response.moduleType}</p>
+                        </div>
+                        <div className="mb-3">
+                          {response.selectedOption && (
+                            <p><strong>Answer:</strong> {response.selectedOption}</p>
+                          )}
+                          {response.responseText && (
+                            <p className="text-sm"><strong>Response:</strong> {response.responseText.substring(0, 100)}...</p>
+                          )}
+                        </div>
+                        {['WRITING', 'SPOKEN_INTERACTION', 'SPOKEN_PRODUCTION'].includes(response.moduleType) && (
+                          <div>
+                            <label className="text-sm font-medium">Score (0-100):</label>
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={responseScores[response.id] || response.score || 0}
+                              onChange={(e) => handleScoreChange(response.id, e.target.value)}
+                              className="form-input w-full mt-1"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Evaluator Notes */}
+                <div>
+                  <label className="form-label">Evaluator Notes</label>
+                  <textarea
+                    value={evaluatorNotes}
+                    onChange={(e) => setEvaluatorNotes(e.target.value)}
+                    className="form-input"
+                    rows="3"
+                    placeholder="Add any notes about this evaluation..."
+                  />
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={() => setShowReviewModal(false)}
+                    className="btn btn-secondary"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={saveEvaluation}
+                    className="btn btn-primary"
+                  >
+                    Save Evaluation
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="p-6 text-center text-gray-600">
+                No submission details available
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );

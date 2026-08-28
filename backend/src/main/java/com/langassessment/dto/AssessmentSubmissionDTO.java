@@ -19,6 +19,7 @@ public class AssessmentSubmissionDTO {
     private Double totalScore;
     private String cefrLevel;
     private String evaluatorNotes;
+    private String message;
     private Integer totalQuestions;
     private Integer correctAnswers;
     private List<ModulePerformanceDTO> modulePerformance;
