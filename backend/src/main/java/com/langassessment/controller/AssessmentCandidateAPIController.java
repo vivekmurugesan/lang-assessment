@@ -209,6 +209,19 @@ public class AssessmentCandidateAPIController {
             AssessmentCandidate candidate = candidateService.getCandidateBySecureLinkEntity(secureLink);
             var submission = submissionService.getSubmissionByCandidate(candidate.getId());
 
+            // Check if submission has been evaluated
+            if (submission.getStatus() != AssessmentSubmission.SubmissionStatus.EVALUATED) {
+                AssessmentSubmissionDTO dto = AssessmentSubmissionDTO.builder()
+                        .id(submission.getId())
+                        .assessmentCandidateId(submission.getAssessmentCandidate().getId())
+                        .status(submission.getStatus().toString())
+                        .totalScore(null)
+                        .cefrLevel(null)
+                        .message("Your submission is being evaluated. Results will be available shortly.")
+                        .build();
+                return ResponseEntity.ok(new AuthDTO.ApiResponse<>(true, "Evaluation in progress", dto));
+            }
+
             // Calculate total questions and correct answers
             List<QuestionResponse> responses = submission.getResponses();
             int totalQuestions = responses.size();

@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 public class QuestionResponseDTO {
     private Integer id;
     private Integer questionId;
+    private String questionText;
+    private String moduleType;
     private String responseText;
     private String audioFilePath;
     private String selectedOption;
