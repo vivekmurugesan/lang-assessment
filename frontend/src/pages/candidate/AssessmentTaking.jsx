@@ -68,9 +68,9 @@ const AssessmentTaking = () => {
     if (!question.questionOptionsUri) return;
 
     try {
-      const response = await fetch(question.questionOptionsUri);
-      if (!response.ok) throw new Error('Failed to fetch options');
-      const data = await response.json();
+      const response = await api.get(`/candidate/questions/${question.id}/options`);
+      if (!response.data.success) throw new Error('Failed to fetch options');
+      const data = response.data.data;
 
       // Convert array to object with A, B, C, D keys if it's an array
       let optionsObj = data;
@@ -90,7 +90,6 @@ const AssessmentTaking = () => {
       }));
     } catch (error) {
       console.error('Failed to fetch question options:', error);
-      toast.error('Failed to load question options');
     }
   };
 
@@ -272,7 +271,7 @@ const AssessmentTaking = () => {
                   <div className="mb-6 p-4 bg-blue-50 rounded-lg">
                     {currentQuestion?.audioUrl ? (
                       <>
-                        <audio ref={audioPlayerRef} src={currentQuestion.audioUrl} className="w-full mb-3" controls />
+                        <audio ref={audioPlayerRef} src={`/api/candidate/questions/${currentQuestion.id}/audio`} className="w-full mb-3" controls />
                         <p className="text-sm text-gray-600">Click the play button above to listen to the audio content</p>
                       </>
                     ) : (
@@ -311,7 +310,7 @@ const AssessmentTaking = () => {
                 )}
 
                 {/* Recording for Speaking */}
-                {currentQuestion?.moduleType === 'SPOKEN_INTERACTION' && (
+                {['SPOKEN_INTERACTION', 'SPOKEN_PRODUCTION'].includes(currentQuestion?.moduleType) && (
                   <div className="space-y-4">
                     <div className="p-6 bg-red-50 rounded-lg border border-red-200">
                       <div className="flex items-center justify-center">
