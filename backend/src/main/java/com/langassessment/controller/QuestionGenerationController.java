@@ -8,6 +8,7 @@ import com.langassessment.entity.Question;
 import com.langassessment.repository.AssessmentModuleRepository;
 import com.langassessment.repository.AssessmentRepository;
 import com.langassessment.repository.QuestionRepository;
+import com.langassessment.repository.AssessmentQuestionSelectionRepository;
 import com.langassessment.service.QuestionGenerationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,7 @@ public class QuestionGenerationController {
     private final AssessmentRepository assessmentRepository;
     private final AssessmentModuleRepository moduleRepository;
     private final QuestionRepository questionRepository;
+    private final AssessmentQuestionSelectionRepository selectionRepository;
 
     @PostMapping("/generate/{assessmentId}")
     @Transactional
@@ -133,11 +135,15 @@ public class QuestionGenerationController {
                     .filter(q -> q.getApprovalStatus() == Question.ApprovalStatus.PENDING_REVIEW)
                     .count();
 
+            // Count selected questions for this assessment
+            long selected = selectionRepository.findByAssessmentOrderBySequenceNumber(assessment).size();
+
             Map<String, Object> status = new HashMap<>();
             status.put("generated", generated);
             status.put("approved", approved);
             status.put("rejected", rejected);
             status.put("pending", pending);
+            status.put("selected", selected);
 
             return ResponseEntity.ok(new AuthDTO.ApiResponse<>(true, "Assessment status retrieved", status));
         } catch (Exception e) {
