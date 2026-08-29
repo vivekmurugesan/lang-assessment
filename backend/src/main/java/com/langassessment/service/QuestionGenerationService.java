@@ -82,6 +82,12 @@ public class QuestionGenerationService {
                 - Have clear answers
                 %s
 
+                IMPORTANT FORMATTING RULES:
+                - DO NOT include CEFR level (like "B1", "A2") anywhere in the question text
+                - DO NOT mention the question type or CEFR level in the question
+                - For WRITING and SPOKEN modules: DO NOT include multiple-choice options - these are open-ended
+                - For READING and LISTENING modules: Include exactly 4 multiple-choice options (A, B, C, D)
+
                 IMPORTANT - CONTENT SAFETY GUIDELINES:
                 Questions MUST be:
                 ✓ Educational and appropriate for language learners
@@ -129,11 +135,11 @@ public class QuestionGenerationService {
 
     private String getModuleSpecificGuidance(String moduleType) {
         return switch (moduleType) {
-            case "LISTENING" -> "- Each question should have corresponding audio content";
-            case "READING" -> "- Base questions on short text passages";
-            case "WRITING" -> "- Provide writing prompts with clear requirements";
-            case "SPOKEN_INTERACTION" -> "- Create conversational scenarios";
-            case "SPOKEN_PRODUCTION" -> "- Create reading/speaking prompts";
+            case "LISTENING" -> "- Each question should have corresponding audio content\n- Create 4 multiple-choice options (A, B, C, D)";
+            case "READING" -> "- Base questions on short text passages\n- Create 4 multiple-choice options (A, B, C, D)";
+            case "WRITING" -> "- Provide writing prompts (NOT multiple-choice) that ask for open-ended text responses\n- Include context and word count guidance if appropriate\n- Mark type as 'essay', NOT 'multiple-choice'\n- Leave options array empty";
+            case "SPOKEN_INTERACTION" -> "- Create realistic conversational scenarios where candidate responds to a prompt\n- NOT multiple-choice - candidate will record their response\n- Give clear context and what the candidate should do\n- Mark type as 'short-answer', NOT 'multiple-choice'\n- Leave options array empty";
+            case "SPOKEN_PRODUCTION" -> "- Create speaking prompts for monologue or presentation\n- NOT multiple-choice - candidate will record their response\n- Give clear topic and time limit if appropriate\n- Mark type as 'essay', NOT 'multiple-choice'\n- Leave options array empty";
             default -> "";
         };
     }

@@ -16,6 +16,7 @@ const AssessmentMonitoring = () => {
   const [loadingSubmission, setLoadingSubmission] = useState(false);
   const [evaluatorNotes, setEvaluatorNotes] = useState('');
   const [responseScores, setResponseScores] = useState({});
+  const [evaluationSaved, setEvaluationSaved] = useState(false);
   const [stats, setStats] = useState({
     totalCandidates: 0,
     invited: 0,
@@ -85,13 +86,8 @@ const AssessmentMonitoring = () => {
     setLoadingSubmission(true);
     setShowReviewModal(true);
     try {
-      const response = await api.get(`/admin/submissions`);
-      const submission = response.data.data.content.find(s =>
-        s.assessmentCandidateId === candidate.id
-      );
-
-      if (submission && submission.id) {
-        const detailsResponse = await api.get(`/admin/submissions/${submission.id}`);
+      const detailsResponse = await api.get(`/admin/submissions/candidate/${candidate.id}`);
+      if (detailsResponse.data.success) {
         setSubmissionDetails(detailsResponse.data.data);
         setEvaluatorNotes(detailsResponse.data.data.evaluatorNotes || '');
 
@@ -103,6 +99,9 @@ const AssessmentMonitoring = () => {
           });
         }
         setResponseScores(scores);
+      } else {
+        toast.error(detailsResponse.data.message || 'Failed to load submission details');
+        setShowReviewModal(false);
       }
     } catch (error) {
       console.error('Failed to load submission details:', error);
@@ -129,12 +128,17 @@ const AssessmentMonitoring = () => {
         evaluatorNotes
       });
       toast.success('Submission evaluated successfully');
-      setShowReviewModal(false);
-      loadCandidates(selectedAssessment);
+      setEvaluationSaved(true);
     } catch (error) {
       console.error('Failed to save evaluation:', error);
       toast.error('Failed to save evaluation');
     }
+  };
+
+  const closeReviewModal = () => {
+    setShowReviewModal(false);
+    setEvaluationSaved(false);
+    loadCandidates(selectedAssessment);
   };
 
   const getStatusColor = (status) => {
@@ -361,6 +365,18 @@ const AssessmentMonitoring = () => {
 
             {loadingSubmission ? (
               <div className="p-6 text-center">Loading submission details...</div>
+            ) : evaluationSaved ? (
+              <div className="p-6 text-center space-y-4">
+                <div className="text-5xl">✓</div>
+                <h3 className="text-xl font-bold text-green-600">Evaluation Approved</h3>
+                <p className="text-gray-600">The submission has been evaluated and the candidate can now view their results.</p>
+                <button
+                  onClick={closeReviewModal}
+                  className="btn btn-primary mt-4"
+                >
+                  Close
+                </button>
+              </div>
             ) : submissionDetails ? (
               <div className="p-6 space-y-6">
                 {/* Submission Summary */}
@@ -445,7 +461,7 @@ const AssessmentMonitoring = () => {
                     onClick={saveEvaluation}
                     className="btn btn-primary"
                   >
-                    Save Evaluation
+                    Save & Approve Evaluation
                   </button>
                 </div>
               </div>

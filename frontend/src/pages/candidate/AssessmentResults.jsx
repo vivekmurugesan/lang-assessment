@@ -34,12 +34,18 @@ const AssessmentResults = () => {
     );
   }
 
-  if (!results) {
+  if (!results || results.message) {
     return (
-      <div className="p-6">
-        <div className="card text-center py-12">
-          <p className="text-gray-600">Results not available yet</p>
-          <p className="text-sm text-gray-500 mt-2">Your assessment is being evaluated</p>
+      <div className="p-6 min-h-screen flex items-center justify-center">
+        <div className="card text-center py-12 max-w-md">
+          <div className="mb-4 text-4xl">⏳</div>
+          <p className="text-gray-800 font-semibold text-lg mb-2">Evaluation in Progress</p>
+          <p className="text-gray-600 mb-4">
+            {results?.message || 'Your assessment is being carefully reviewed by our evaluators.'}
+          </p>
+          <p className="text-sm text-gray-500">
+            We'll notify you as soon as your results are ready. Thank you for your patience!
+          </p>
         </div>
       </div>
     );
