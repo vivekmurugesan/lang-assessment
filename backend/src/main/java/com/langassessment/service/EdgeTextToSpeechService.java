@@ -3,6 +3,7 @@ package com.langassessment.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -22,15 +23,15 @@ public class EdgeTextToSpeechService implements TextToSpeechService {
     private final RestTemplate restTemplate;
     private final MinIOService minIOService;
 
-    // EdgeTTS Python backend - can be run locally or on a separate server
-    private static final String EDGE_TTS_API_URL = "http://localhost:5001/tts";
+    @Value("${edge.tts.api.url:http://edge-tts:5001/tts}")
+    private String edgeTtsApiUrl;
 
     @Override
     public String synthesizeAndStore(String text, String languageCode, Optional<String> voiceName) throws Exception {
         log.info("🎵 EdgeTTS synthesizeAndStore called for language: {}", languageCode);
 
         if (!isAvailable()) {
-            log.error("❌ EdgeTTS API not available. Check if edge-tts service is running at {}", EDGE_TTS_API_URL);
+            log.error("❌ EdgeTTS API not available. Check if edge-tts service is running at {}", edgeTtsApiUrl);
             throw new IllegalStateException("EdgeTTS API not available. Start EdgeTTS server or use Google TTS");
         }
 
@@ -58,7 +59,7 @@ public class EdgeTextToSpeechService implements TextToSpeechService {
     @Override
     public boolean isAvailable() {
         try {
-            log.info("🔍 Checking EdgeTTS service availability at: {}", EDGE_TTS_API_URL);
+            log.info("🔍 Checking EdgeTTS service availability at: {}", edgeTtsApiUrl);
 
             // Quick health check to see if EdgeTTS server is running
             HttpHeaders headers = new HttpHeaders();
@@ -74,7 +75,7 @@ public class EdgeTextToSpeechService implements TextToSpeechService {
             );
 
             ResponseEntity<byte[]> response = restTemplate.postForEntity(
-                EDGE_TTS_API_URL,
+                edgeTtsApiUrl,
                 entity,
                 byte[].class
             );
@@ -86,7 +87,7 @@ public class EdgeTextToSpeechService implements TextToSpeechService {
 
             return available;
         } catch (Exception e) {
-            log.error("❌ EdgeTTS service not available: {} | URL: {}", e.getMessage(), EDGE_TTS_API_URL);
+            log.error("❌ EdgeTTS service not available: {} | URL: {}", e.getMessage(), edgeTtsApiUrl);
             return false;
         }
     }
@@ -106,7 +107,7 @@ public class EdgeTextToSpeechService implements TextToSpeechService {
 
         try {
             ResponseEntity<byte[]> response = restTemplate.postForEntity(
-                EDGE_TTS_API_URL,
+                edgeTtsApiUrl,
                 entity,
                 byte[].class
             );
