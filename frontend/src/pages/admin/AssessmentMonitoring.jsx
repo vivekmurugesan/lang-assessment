@@ -17,6 +17,7 @@ const AssessmentMonitoring = () => {
   const [evaluatorNotes, setEvaluatorNotes] = useState('');
   const [responseScores, setResponseScores] = useState({});
   const [evaluationSaved, setEvaluationSaved] = useState(false);
+  const [sharingScorecard, setSharingScorecard] = useState(false);
   const [stats, setStats] = useState({
     totalCandidates: 0,
     invited: 0,
@@ -139,6 +140,21 @@ const AssessmentMonitoring = () => {
     setShowReviewModal(false);
     setEvaluationSaved(false);
     loadCandidates(selectedAssessment);
+  };
+
+  const shareScorecard = async () => {
+    if (!submissionDetails) return;
+
+    setSharingScorecard(true);
+    try {
+      await api.post(`/admin/submissions/${submissionDetails.id}/share-scorecard`);
+      toast.success('Scorecard shared with candidate via email!');
+    } catch (error) {
+      console.error('Failed to share scorecard:', error);
+      toast.error('Failed to share scorecard');
+    } finally {
+      setSharingScorecard(false);
+    }
   };
 
   const getStatusColor = (status) => {
@@ -369,13 +385,22 @@ const AssessmentMonitoring = () => {
               <div className="p-6 text-center space-y-4">
                 <div className="text-5xl">✓</div>
                 <h3 className="text-xl font-bold text-green-600">Evaluation Approved</h3>
-                <p className="text-gray-600">The submission has been evaluated and the candidate can now view their results.</p>
-                <button
-                  onClick={closeReviewModal}
-                  className="btn btn-primary mt-4"
-                >
-                  Close
-                </button>
+                <p className="text-gray-600">The submission has been evaluated. Would you like to share the scorecard with the candidate?</p>
+                <div className="flex gap-3 justify-center mt-4">
+                  <button
+                    onClick={shareScorecard}
+                    disabled={sharingScorecard}
+                    className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    📧 Share Scorecard
+                  </button>
+                  <button
+                    onClick={closeReviewModal}
+                    className="btn btn-secondary"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             ) : submissionDetails ? (
               <div className="p-6 space-y-6">
@@ -411,12 +436,21 @@ const AssessmentMonitoring = () => {
                           <p className="font-medium">Q{idx + 1}: {response.questionText}</p>
                           <p className="text-sm text-gray-600">{response.moduleType}</p>
                         </div>
-                        <div className="mb-3">
+                        <div className="mb-3 space-y-2">
                           {response.selectedOption && (
                             <p><strong>Answer:</strong> {response.selectedOption}</p>
                           )}
                           {response.responseText && (
-                            <p className="text-sm"><strong>Response:</strong> {response.responseText.substring(0, 100)}...</p>
+                            <div>
+                              <p className="text-sm font-medium"><strong>Response:</strong></p>
+                              <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded">{response.responseText}</p>
+                            </div>
+                          )}
+                          {response.feedback && (
+                            <div className="mt-3 p-3 bg-blue-50 rounded border-l-4 border-blue-400">
+                              <p className="text-sm font-medium text-blue-900">Evaluation Feedback:</p>
+                              <p className="text-sm text-blue-800 mt-1">{response.feedback}</p>
+                            </div>
                           )}
                         </div>
                         {['WRITING', 'SPOKEN_INTERACTION', 'SPOKEN_PRODUCTION'].includes(response.moduleType) && (
