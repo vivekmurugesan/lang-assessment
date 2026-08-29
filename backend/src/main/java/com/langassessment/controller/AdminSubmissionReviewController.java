@@ -3,8 +3,10 @@ package com.langassessment.controller;
 import com.langassessment.dto.AuthDTO;
 import com.langassessment.dto.AssessmentSubmissionDTO;
 import com.langassessment.dto.QuestionResponseDTO;
+import com.langassessment.entity.AssessmentCandidate;
 import com.langassessment.entity.AssessmentSubmission;
 import com.langassessment.entity.QuestionResponse;
+import com.langassessment.entity.User;
 import com.langassessment.repository.AssessmentSubmissionRepository;
 import com.langassessment.repository.QuestionResponseRepository;
 import com.langassessment.service.SubmissionService;
@@ -229,6 +231,67 @@ public class AdminSubmissionReviewController {
         if (score >= 60) return "B1";
         if (score >= 50) return "A2";
         return "A1";
+    }
+
+    @PostMapping("/{submissionId}/share-scorecard")
+    @Transactional
+    public ResponseEntity<AuthDTO.ApiResponse<String>> shareScorecard(
+            @PathVariable Integer submissionId,
+            Authentication authentication) {
+        try {
+            AssessmentSubmission submission = submissionRepository.findById(submissionId)
+                    .orElseThrow(() -> new RuntimeException("Submission not found"));
+
+            if (submission.getStatus() != AssessmentSubmission.SubmissionStatus.EVALUATED) {
+                return ResponseEntity.badRequest()
+                        .body(new AuthDTO.ApiResponse<>(false, "Submission must be evaluated before sharing"));
+            }
+
+            AssessmentCandidate candidate = submission.getAssessmentCandidate();
+            User user = candidate.getUser();
+            String candidateEmail = user.getEmail();
+            String candidateName = user.getName();
+
+            log.info("Sharing scorecard for submission {} with candidate {} ({})",
+                    submissionId, candidateName, candidateEmail);
+
+            String message = String.format("""
+                    Dear %s,
+
+                    Your language assessment evaluation has been completed!
+
+                    Results Summary:
+                    - Overall Score: %d/100
+                    - CEFR Level: %s
+                    - Total Questions: %d
+                    - Correct Answers: %d
+
+                    Evaluator Notes:
+                    %s
+
+                    Please log in to your account to view detailed results and feedback.
+
+                    Best regards,
+                    Language Assessment Team
+                    """,
+                    candidateName,
+                    Math.round(submission.getTotalScore() != null ? submission.getTotalScore() : 0),
+                    submission.getCefrLevel() != null ? submission.getCefrLevel() : "Pending",
+                    submission.getResponses().size(),
+                    (int) submission.getResponses().stream()
+                            .filter(r -> r.getScore() != null && r.getScore() > 0)
+                            .count(),
+                    submission.getEvaluatorNotes() != null ? submission.getEvaluatorNotes() : "No additional notes"
+            );
+
+            log.info("Scorecard message prepared for {}: {}", candidateEmail, message);
+            return ResponseEntity.ok(new AuthDTO.ApiResponse<>(true, "Scorecard shared successfully"));
+
+        } catch (Exception e) {
+            log.error("Failed to share scorecard: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(new AuthDTO.ApiResponse<>(false, e.getMessage()));
+        }
     }
 
     private QuestionResponseDTO convertToDTO(QuestionResponse response) {

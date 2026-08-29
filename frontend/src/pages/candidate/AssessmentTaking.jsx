@@ -65,12 +65,23 @@ const AssessmentTaking = () => {
   };
 
   const fetchQuestionOptions = async (question) => {
-    if (!question.questionOptionsUri) return;
+    if (!question.questionOptionsUri) {
+      console.warn(`No options URI for question ${question.id}`);
+      return;
+    }
 
     try {
       const response = await api.get(`/candidate/questions/${question.id}/options`);
-      if (!response.data.success) throw new Error('Failed to fetch options');
+      if (!response.data.success) {
+        console.error('API returned error:', response.data.message);
+        throw new Error(response.data.message || 'Failed to fetch options');
+      }
+
       const data = response.data.data;
+      if (!data) {
+        console.warn(`No options data returned for question ${question.id}`);
+        return;
+      }
 
       // Convert array to object with A, B, C, D keys if it's an array
       let optionsObj = data;
@@ -89,7 +100,8 @@ const AssessmentTaking = () => {
         [question.id]: optionsObj
       }));
     } catch (error) {
-      console.error('Failed to fetch question options:', error);
+      console.error('Failed to fetch question options for question', question.id, ':', error);
+      toast.error('Failed to load options for this question');
     }
   };
 
@@ -179,8 +191,8 @@ const AssessmentTaking = () => {
     try {
       await saveCurrentResponse();
       await api.post(`/candidate/submissions/${submission.id}/submit`);
-      toast.success('Assessment submitted successfully!');
-      navigate(`/assessment/${secureLink}/results`);
+      toast.success('Assessment submitted successfully! Your results will be shared via email once the evaluation is complete.');
+      navigate(`/candidate`);
     } catch (error) {
       console.error('Failed to submit assessment:', error);
       toast.error('Failed to submit assessment');
@@ -268,14 +280,28 @@ const AssessmentTaking = () => {
               <div className="mb-8">
                 {/* Audio Playback for Listening */}
                 {currentQuestion?.moduleType === 'LISTENING' && (
-                  <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                  <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                     {currentQuestion?.audioUrl ? (
                       <>
-                        <audio ref={audioPlayerRef} src={`/api/candidate/questions/${currentQuestion.id}/audio`} className="w-full mb-3" controls />
-                        <p className="text-sm text-gray-600">Click the play button above to listen to the audio content</p>
+                        <div className="mb-3">
+                          <audio
+                            ref={audioPlayerRef}
+                            src={`/api/candidate/questions/${currentQuestion.id}/audio`}
+                            className="w-full"
+                            controls
+                            onError={(e) => {
+                              console.error('Audio playback error:', e);
+                              toast.error('Failed to load audio. Please try refreshing the page.');
+                            }}
+                          />
+                        </div>
+                        <p className="text-sm text-gray-600">Click play to listen to the audio, then answer the question below</p>
                       </>
                     ) : (
-                      <p className="text-sm text-gray-600 text-center py-4">Audio content not available</p>
+                      <div className="text-center py-6">
+                        <p className="text-sm text-gray-600">Audio content is being prepared</p>
+                        <p className="text-xs text-gray-500 mt-1">Please check back in a moment or contact support if this persists</p>
+                      </div>
                     )}
                   </div>
                 )}
@@ -284,26 +310,34 @@ const AssessmentTaking = () => {
                 {['READING', 'LISTENING'].includes(currentQuestion?.moduleType) && (
                   <div className="space-y-3">
                     {questionOptions[currentQuestion?.id] ? (
-                      Object.entries(questionOptions[currentQuestion?.id]).map(([key, value]) => (
-                        <label key={key} className="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-indigo-500 transition"
-                          style={{
-                            borderColor: responses[currentQuestion?.id]?.option === key ? '#4F46E5' : '#D1D5DB'
-                          }}>
-                          <input
-                            type="radio"
-                            name={`question-${currentQuestion?.id}`}
-                            value={key}
-                            checked={responses[currentQuestion?.id]?.option === key}
-                            onChange={(e) => handleResponseChange(e.target.value, 'option')}
-                            className="mr-3"
-                          />
-                          <span className="font-medium mr-3">{key}.</span>
-                          <span>{value}</span>
-                        </label>
-                      ))
+                      <div className="space-y-3">
+                        {Object.keys(questionOptions[currentQuestion?.id]).length > 0 ? (
+                          Object.entries(questionOptions[currentQuestion?.id]).map(([key, value]) => (
+                            <label key={key} className="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-indigo-500 transition"
+                              style={{
+                                borderColor: responses[currentQuestion?.id]?.option === key ? '#4F46E5' : '#D1D5DB'
+                              }}>
+                              <input
+                                type="radio"
+                                name={`question-${currentQuestion?.id}`}
+                                value={key}
+                                checked={responses[currentQuestion?.id]?.option === key}
+                                onChange={(e) => handleResponseChange(e.target.value, 'option')}
+                                className="mr-3"
+                              />
+                              <span className="font-medium mr-3">{key}.</span>
+                              <span>{value}</span>
+                            </label>
+                          ))
+                        ) : (
+                          <div className="text-center py-6 bg-yellow-50 rounded-lg border border-yellow-200">
+                            <p className="text-sm text-yellow-800">No options available for this question</p>
+                          </div>
+                        )}
+                      </div>
                     ) : (
                       <div className="text-center py-6 bg-gray-100 rounded-lg">
-                        <p className="text-gray-600">Loading options...</p>
+                        <p className="text-gray-600 animate-pulse">Loading options...</p>
                       </div>
                     )}
                   </div>
