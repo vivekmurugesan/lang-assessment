@@ -43,6 +43,26 @@ services:
     networks:
       - lang-assessment-network
 
+  edge-tts:
+    build:
+      context: ./edge-tts-server
+      dockerfile: Dockerfile
+    container_name: lang-assessment-edge-tts
+    ports:
+      - "5001:5001"
+    environment:
+      FLASK_ENV: production
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lang-assessment-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   backend:
     build:
       context: ./backend
@@ -52,6 +72,8 @@ services:
       postgres:
         condition: service_healthy
       minio:
+        condition: service_healthy
+      edge-tts:
         condition: service_healthy
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME:-lang_assessment}
@@ -64,6 +86,8 @@ services:
       JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
       EVALUATION_SERVICE_URL: http://evaluation-service:5000
       GEMINI_API_KEY: ${GEMINI_API_KEY}
+      TTS_PROVIDER: ${TTS_PROVIDER:-edge}
+      EDGE_TTS_API_URL: ${EDGE_TTS_API_URL:-http://edge-tts:5001/tts}
       MAIL_HOST: ${MAIL_HOST}
       MAIL_PORT: ${MAIL_PORT}
       MAIL_USERNAME: ${MAIL_USERNAME}
