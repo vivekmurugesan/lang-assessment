@@ -154,7 +154,7 @@ public class QuestionService {
 
             // Extract object name from MinIO URL
             String objectName = extractObjectNameFromUrl(questionOptionsUri);
-            InputStream inputStream = storageService.downloadFile(objectName, "assessment");
+            InputStream inputStream = storageService.downloadFile(objectName, "questions");
 
             // Read JSON content
             return objectMapper.readValue(inputStream, Object.class);
@@ -172,7 +172,7 @@ public class QuestionService {
 
             // Extract object name from MinIO URL
             String objectName = extractObjectNameFromUrl(audioUrl);
-            InputStream inputStream = storageService.downloadFile(objectName, "assessment");
+            InputStream inputStream = storageService.downloadFile(objectName, "questions");
 
             // Read bytes
             return inputStream.readAllBytes();
