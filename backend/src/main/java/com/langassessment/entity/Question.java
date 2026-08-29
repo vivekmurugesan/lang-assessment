@@ -96,6 +96,20 @@ public class Question {
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "audio_generation_status", nullable = false)
+    private ContentGenerationStatus audioGenerationStatus = ContentGenerationStatus.NOT_REQUIRED;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "options_generation_status", nullable = false)
+    private ContentGenerationStatus optionsGenerationStatus = ContentGenerationStatus.NOT_REQUIRED;
+
+    @Column(name = "audio_generation_error", columnDefinition = "TEXT")
+    private String audioGenerationError;
+
+    @Column(name = "options_generation_error", columnDefinition = "TEXT")
+    private String optionsGenerationError;
+
     public enum ModuleType {
         LISTENING,
         READING,
@@ -116,5 +130,13 @@ public class Question {
         PENDING_REVIEW,
         APPROVED,
         REJECTED
+    }
+
+    public enum ContentGenerationStatus {
+        NOT_REQUIRED,
+        PENDING,
+        GENERATING,
+        GENERATED,
+        FAILED
     }
 }

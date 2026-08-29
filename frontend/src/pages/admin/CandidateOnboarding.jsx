@@ -206,27 +206,85 @@ const CandidateOnboarding = () => {
               )}
 
               {contentValidation && !contentValidation.isReadyForCandidates && (
-                <div className="card mb-6 bg-red-50 border border-red-200">
+                <div className={`card mb-6 border-2 ${
+                  contentValidation.isGeneratingContent
+                    ? 'bg-blue-50 border-blue-200'
+                    : !contentValidation.failedContent || contentValidation.failedContent.length === 0
+                    ? 'bg-amber-50 border-amber-200'
+                    : 'bg-red-50 border-red-200'
+                }`}>
                   <div className="flex items-start gap-3">
-                    <div className="text-2xl">🔴</div>
-                    <div>
-                      <h3 className="font-bold text-red-900 mb-1">Content Not Ready for Candidates</h3>
-                      <p className="text-sm text-red-800 mb-2">
-                        Assessment has missing required content:
-                      </p>
-                      {contentValidation.issues && contentValidation.issues.length > 0 && (
+                    <div className="text-2xl">
+                      {contentValidation.isGeneratingContent ? '⏳' : !contentValidation.failedContent || contentValidation.failedContent.length === 0 ? '⚠️' : '🔴'}
+                    </div>
+                    <div className="flex-1">
+                      <h3 className={`font-bold mb-1 ${
+                        contentValidation.isGeneratingContent
+                          ? 'text-blue-900'
+                          : !contentValidation.failedContent || contentValidation.failedContent.length === 0
+                          ? 'text-amber-900'
+                          : 'text-red-900'
+                      }`}>
+                        {contentValidation.isGeneratingContent
+                          ? '⏳ Content Generation in Progress'
+                          : !contentValidation.failedContent || contentValidation.failedContent.length === 0
+                          ? '⚠ Content Preparation Required'
+                          : '🔴 Content Generation Failed'}
+                      </h3>
+
+                      {contentValidation.isGeneratingContent && (
                         <div className="mb-3">
+                          <p className="text-sm text-blue-800 mb-2">
+                            The following content is being generated:
+                          </p>
+                          {contentValidation.generatingContent && contentValidation.generatingContent.length > 0 && (
+                            <div className="space-y-1">
+                              {contentValidation.generatingContent.map((item, idx) => (
+                                <div key={idx} className="flex items-center gap-2">
+                                  <span className="animate-spin">◴</span>
+                                  <p className="text-xs text-blue-700">{item}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <p className="text-xs text-blue-700 mt-3">
+                            Please wait while content is being prepared. Refresh this page in a few moments to check progress.
+                          </p>
+                        </div>
+                      )}
+
+                      {contentValidation.failedContent && contentValidation.failedContent.length > 0 && (
+                        <div className="mb-3">
+                          <p className="text-sm text-red-800 mb-2">
+                            Failed to generate content for:
+                          </p>
+                          {contentValidation.failedContent.map((issue, idx) => (
+                            <p key={idx} className="text-xs text-red-700 mb-1">✗ {issue}</p>
+                          ))}
+                          <p className="text-xs text-red-700 mt-2">
+                            <strong>Action Required:</strong> Go to Assessment Setup and regenerate failed content
+                          </p>
+                        </div>
+                      )}
+
+                      {contentValidation.issues && contentValidation.issues.length > 0 && !contentValidation.isGeneratingContent && (
+                        <div className="mb-3">
+                          <p className="text-sm text-amber-800 mb-2">
+                            Missing required content:
+                          </p>
                           {contentValidation.issues.map((issue, idx) => (
-                            <p key={idx} className="text-xs text-red-700 mb-1">• {issue}</p>
+                            <p key={idx} className="text-xs text-amber-700 mb-1">• {issue}</p>
                           ))}
                         </div>
                       )}
-                      <p className="text-xs text-red-700 mb-3">
-                        <strong>To proceed:</strong> Go to Assessment Setup → Validate Content Ready and resolve all issues
-                      </p>
+
                       <button
                         onClick={() => navigate('/admin/assessments')}
-                        className="text-sm font-medium text-red-600 hover:text-red-700 underline"
+                        className={`text-sm font-medium underline ${
+                          contentValidation.isGeneratingContent
+                            ? 'text-blue-600 hover:text-blue-700'
+                            : 'text-amber-600 hover:text-amber-700'
+                        }`}
                       >
                         Go to Assessment Setup →
                       </button>

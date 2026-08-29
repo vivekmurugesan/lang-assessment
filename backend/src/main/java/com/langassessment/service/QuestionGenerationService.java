@@ -406,14 +406,39 @@ public class QuestionGenerationService {
                         .generatedBy("GEMINI_API")
                         .catalogCategory("GENERAL")
                         .approvalStatus(Question.ApprovalStatus.PENDING_REVIEW)
+                        .audioGenerationStatus(Question.ContentGenerationStatus.NOT_REQUIRED)
+                        .optionsGenerationStatus(Question.ContentGenerationStatus.NOT_REQUIRED)
                         .build();
 
-                // Store question options in MinIO
-                if (options != null && !options.isEmpty()) {
-                    String optionsJson = mapper.writeValueAsString(options);
-                    String optionsUri = uploadLargeContentToMinIO(optionsJson, "question-options");
-                    if (optionsUri != null) {
-                        question.setQuestionOptionsUri(optionsUri);
+                // Determine if audio generation is needed for LISTENING module
+                if ("LISTENING".equals(moduleType)) {
+                    question.setAudioGenerationStatus(Question.ContentGenerationStatus.PENDING);
+                }
+
+                // Determine if options generation is needed for LISTENING and READING
+                if ("LISTENING".equals(moduleType) || "READING".equals(moduleType)) {
+                    // Store question options in MinIO
+                    if (options != null && !options.isEmpty()) {
+                        String optionsJson = mapper.writeValueAsString(options);
+                        String optionsUri = uploadLargeContentToMinIO(optionsJson, "question-options");
+                        if (optionsUri != null) {
+                            question.setQuestionOptionsUri(optionsUri);
+                            question.setOptionsGenerationStatus(Question.ContentGenerationStatus.GENERATED);
+                        } else {
+                            question.setOptionsGenerationStatus(Question.ContentGenerationStatus.FAILED);
+                            question.setOptionsGenerationError("Failed to upload options to MinIO");
+                        }
+                    } else {
+                        question.setOptionsGenerationStatus(Question.ContentGenerationStatus.PENDING);
+                    }
+                } else {
+                    // Store question options in MinIO for other modules too
+                    if (options != null && !options.isEmpty()) {
+                        String optionsJson = mapper.writeValueAsString(options);
+                        String optionsUri = uploadLargeContentToMinIO(optionsJson, "question-options");
+                        if (optionsUri != null) {
+                            question.setQuestionOptionsUri(optionsUri);
+                        }
                     }
                 }
 
