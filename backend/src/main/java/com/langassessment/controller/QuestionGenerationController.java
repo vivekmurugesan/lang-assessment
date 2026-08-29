@@ -220,8 +220,11 @@ public class QuestionGenerationController {
             Map<String, Object> validation = new HashMap<>();
             Map<String, Object> contentCheck = new HashMap<>();
             boolean isReadyForCandidates = true;
+            boolean isGeneratingContent = false;
 
             List<String> issues = new java.util.ArrayList<>();
+            List<String> generatingContent = new java.util.ArrayList<>();
+            List<String> failedContent = new java.util.ArrayList<>();
 
             if (selectedQuestions.isEmpty()) {
                 isReadyForCandidates = false;
@@ -247,13 +250,30 @@ public class QuestionGenerationController {
                                 .filter(sq -> sq.getQuestion().getQuestionOptionsUri() != null
                                         && !sq.getQuestion().getQuestionOptionsUri().isEmpty())
                                 .count();
+                        long generatingOptions = moduleQuestions.stream()
+                                .filter(sq -> sq.getQuestion().getOptionsGenerationStatus() == Question.ContentGenerationStatus.GENERATING)
+                                .count();
+                        long failedOptions = moduleQuestions.stream()
+                                .filter(sq -> sq.getQuestion().getOptionsGenerationStatus() == Question.ContentGenerationStatus.FAILED)
+                                .count();
+
                         moduleStatus.put("questionsWithOptions", withOptions);
+                        moduleStatus.put("generatingOptions", generatingOptions);
+                        moduleStatus.put("failedOptions", failedOptions);
                         moduleStatus.put("optionsReady", withOptions == moduleQuestions.size());
 
                         if (withOptions < moduleQuestions.size()) {
-                            isReadyForCandidates = false;
-                            issues.add(moduleType + ": " + (moduleQuestions.size() - withOptions)
-                                    + " question(s) missing answer options");
+                            if (generatingOptions > 0) {
+                                isGeneratingContent = true;
+                                generatingContent.add(moduleType + ": Generating answer options for " + generatingOptions + " question(s)");
+                            } else if (failedOptions > 0) {
+                                failedContent.add(moduleType + ": Failed to generate options for " + failedOptions + " question(s)");
+                            } else {
+                                isReadyForCandidates = false;
+                                issues.add(moduleType + ": " + (moduleQuestions.size() - withOptions)
+                                        + " question(s) missing answer options (status: " +
+                                        getContentStatusForModule(moduleQuestions, "options") + ")");
+                            }
                         }
                     }
 
@@ -263,13 +283,30 @@ public class QuestionGenerationController {
                                 .filter(sq -> sq.getQuestion().getAudioUrl() != null
                                         && !sq.getQuestion().getAudioUrl().isEmpty())
                                 .count();
+                        long generatingAudio = moduleQuestions.stream()
+                                .filter(sq -> sq.getQuestion().getAudioGenerationStatus() == Question.ContentGenerationStatus.GENERATING)
+                                .count();
+                        long failedAudio = moduleQuestions.stream()
+                                .filter(sq -> sq.getQuestion().getAudioGenerationStatus() == Question.ContentGenerationStatus.FAILED)
+                                .count();
+
                         moduleStatus.put("questionsWithAudio", withAudio);
+                        moduleStatus.put("generatingAudio", generatingAudio);
+                        moduleStatus.put("failedAudio", failedAudio);
                         moduleStatus.put("audioReady", withAudio == moduleQuestions.size());
 
                         if (withAudio < moduleQuestions.size()) {
-                            isReadyForCandidates = false;
-                            issues.add("LISTENING: " + (moduleQuestions.size() - withAudio)
-                                    + " question(s) missing audio content");
+                            if (generatingAudio > 0) {
+                                isGeneratingContent = true;
+                                generatingContent.add("LISTENING: Generating audio for " + generatingAudio + " question(s)");
+                            } else if (failedAudio > 0) {
+                                failedContent.add("LISTENING: Failed to generate audio for " + failedAudio + " question(s)");
+                            } else {
+                                isReadyForCandidates = false;
+                                issues.add("LISTENING: " + (moduleQuestions.size() - withAudio)
+                                        + " question(s) missing audio content (status: " +
+                                        getContentStatusForModule(moduleQuestions, "audio") + ")");
+                            }
                         }
                     }
 
@@ -278,22 +315,46 @@ public class QuestionGenerationController {
             }
 
             validation.put("isReadyForCandidates", isReadyForCandidates);
+            validation.put("isGeneratingContent", isGeneratingContent);
             validation.put("issues", issues);
+            validation.put("generatingContent", generatingContent);
+            validation.put("failedContent", failedContent);
             validation.put("contentByModule", contentCheck);
             validation.put("totalQuestionsSelected", selectedQuestions.size());
 
-            log.info("Content validation for assessment {}: Ready={}, Issues={}",
-                    assessmentId, isReadyForCandidates, issues.size());
+            String message = isReadyForCandidates ? "All content ready for candidates" :
+                           isGeneratingContent ? "Content generation in progress" :
+                           !failedContent.isEmpty() ? "Some content generation failed" :
+                           "Content validation failed";
+
+            log.info("Content validation for assessment {}: Ready={}, Generating={}, Issues={}, Failed={}",
+                    assessmentId, isReadyForCandidates, isGeneratingContent, issues.size(), failedContent.size());
 
             return ResponseEntity.ok(new AuthDTO.ApiResponse<>(
                     true,
-                    isReadyForCandidates ? "All content ready for candidates" : "Content validation failed",
+                    message,
                     validation
             ));
         } catch (Exception e) {
             log.error("Failed to validate content: {}", e.getMessage());
             return ResponseEntity.badRequest()
                     .body(new AuthDTO.ApiResponse<>(false, "Validation failed: " + e.getMessage()));
+        }
+    }
+
+    private String getContentStatusForModule(List<AssessmentQuestionSelection> questions, String contentType) {
+        if ("audio".equals(contentType)) {
+            long pending = questions.stream()
+                    .filter(q -> q.getQuestion().getAudioGenerationStatus() == Question.ContentGenerationStatus.PENDING)
+                    .count();
+            if (pending > 0) return "pending generation";
+            return "not started";
+        } else {
+            long pending = questions.stream()
+                    .filter(q -> q.getQuestion().getOptionsGenerationStatus() == Question.ContentGenerationStatus.PENDING)
+                    .count();
+            if (pending > 0) return "pending generation";
+            return "not started";
         }
     }
 

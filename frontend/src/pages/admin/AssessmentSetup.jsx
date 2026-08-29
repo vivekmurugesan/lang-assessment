@@ -436,25 +436,66 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
               )}
 
               {contentValidation && (
-                <div className={`mt-4 p-4 rounded border ${
+                <div className={`mt-4 p-4 rounded border-2 ${
                   contentValidation.isReadyForCandidates
                     ? 'bg-green-50 border-green-200'
-                    : 'bg-red-50 border-red-200'
+                    : contentValidation.isGeneratingContent
+                    ? 'bg-blue-50 border-blue-200'
+                    : contentValidation.failedContent && contentValidation.failedContent.length > 0
+                    ? 'bg-red-50 border-red-200'
+                    : 'bg-amber-50 border-amber-200'
                 }`}>
                   <p className={`font-semibold ${
                     contentValidation.isReadyForCandidates
                       ? 'text-green-900'
-                      : 'text-red-900'
+                      : contentValidation.isGeneratingContent
+                      ? 'text-blue-900'
+                      : contentValidation.failedContent && contentValidation.failedContent.length > 0
+                      ? 'text-red-900'
+                      : 'text-amber-900'
                   }`}>
-                    {contentValidation.isReadyForCandidates ? '✓ Assessment Ready for Candidates' : '⚠ Assessment Not Ready for Candidates'}
+                    {contentValidation.isReadyForCandidates
+                      ? '✓ Assessment Ready for Candidates'
+                      : contentValidation.isGeneratingContent
+                      ? '⏳ Content Generation in Progress'
+                      : contentValidation.failedContent && contentValidation.failedContent.length > 0
+                      ? '🔴 Content Generation Failed'
+                      : '⚠ Content Preparation Required'}
                   </p>
-                  {contentValidation.issues && contentValidation.issues.length > 0 && (
-                    <div className="mt-2 space-y-1">
-                      {contentValidation.issues.map((issue, idx) => (
-                        <p key={idx} className="text-sm text-red-800">• {issue}</p>
+
+                  {contentValidation.isGeneratingContent && (
+                    <div className="mt-2">
+                      <p className="text-sm font-medium text-blue-800 mb-2">Currently generating:</p>
+                      <div className="space-y-1">
+                        {contentValidation.generatingContent && contentValidation.generatingContent.map((item, idx) => (
+                          <div key={idx} className="flex items-center gap-2">
+                            <span className="animate-spin">◴</span>
+                            <p className="text-xs text-blue-700">{item}</p>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-xs text-blue-700 mt-3">Refresh the page in a few moments to check progress.</p>
+                    </div>
+                  )}
+
+                  {contentValidation.failedContent && contentValidation.failedContent.length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-sm font-medium text-red-800 mb-2">Failed to generate:</p>
+                      {contentValidation.failedContent.map((issue, idx) => (
+                        <p key={idx} className="text-xs text-red-700 mb-1">✗ {issue}</p>
                       ))}
                     </div>
                   )}
+
+                  {contentValidation.issues && contentValidation.issues.length > 0 && !contentValidation.isGeneratingContent && (
+                    <div className="mt-2 space-y-1">
+                      <p className="text-sm font-medium text-amber-800 mb-1">Missing content:</p>
+                      {contentValidation.issues.map((issue, idx) => (
+                        <p key={idx} className="text-xs text-amber-700">• {issue}</p>
+                      ))}
+                    </div>
+                  )}
+
                   {contentValidation.contentByModule && Object.entries(contentValidation.contentByModule).map(([module, details]) => (
                     <div key={module} className="mt-2 text-xs">
                       <p className="font-medium">{module}:</p>
@@ -462,6 +503,8 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
                         {details.total} questions
                         {details.optionsReady === false && ` (${details.questionsWithOptions}/${details.total} with options)`}
                         {details.audioReady === false && ` (${details.questionsWithAudio}/${details.total} with audio)`}
+                        {details.generatingAudio > 0 && ` - ${details.generatingAudio} generating audio`}
+                        {details.generatingOptions > 0 && ` - ${details.generatingOptions} generating options`}
                       </p>
                     </div>
                   ))}
