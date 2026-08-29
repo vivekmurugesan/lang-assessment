@@ -32,6 +32,7 @@ public class QuestionGenerationService {
     private final QuestionRepository questionRepository;
     private final MinIOService minIOService;
     private final RestTemplate restTemplate;
+    private final AudioGenerationService audioGenerationService;
 
     @Value("${gemini.api.key}")
     private String geminiApiKey;
@@ -59,6 +60,11 @@ public class QuestionGenerationService {
         }
 
         log.info("Generated {} questions for assessment: {}", generatedQuestions.size(), assessment.getId());
+
+        // Trigger async audio generation for LISTENING questions
+        log.info("Triggering audio generation for LISTENING questions...");
+        audioGenerationService.generateAudioForQuestions(generatedQuestions);
+
         return generatedQuestions;
     }
 

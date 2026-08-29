@@ -71,4 +71,8 @@ public interface QuestionRepository extends JpaRepository<Question, Integer> {
             Question.ModuleType moduleType,
             Question.ApprovalStatus approvalStatus
     );
+
+    List<Question> findByAudioGenerationStatus(Question.ContentGenerationStatus status);
+
+    List<Question> findByOptionsGenerationStatus(Question.ContentGenerationStatus status);
 }
