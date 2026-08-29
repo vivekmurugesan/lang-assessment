@@ -27,23 +27,30 @@ public class EdgeTextToSpeechService implements TextToSpeechService {
 
     @Override
     public String synthesizeAndStore(String text, String languageCode, Optional<String> voiceName) throws Exception {
+        log.info("🎵 EdgeTTS synthesizeAndStore called for language: {}", languageCode);
+
         if (!isAvailable()) {
+            log.error("❌ EdgeTTS API not available. Check if edge-tts service is running at {}", EDGE_TTS_API_URL);
             throw new IllegalStateException("EdgeTTS API not available. Start EdgeTTS server or use Google TTS");
         }
 
         try {
             String voice = voiceName.orElseGet(() -> getDefaultVoiceForLanguage(languageCode));
+            log.info("🎤 Using voice: {}", voice);
 
             // Call EdgeTTS API
+            log.info("📞 Calling EdgeTTS API for text (length: {})", text.length());
             byte[] audioBytes = callEdgeTTS(text, voice);
+            log.info("✅ Received {} bytes from EdgeTTS", audioBytes.length);
 
             // Upload to MinIO
+            log.info("⬆️  Uploading audio to MinIO...");
             String audioUrl = uploadAudioToMinIO(audioBytes, languageCode);
+            log.info("✅ Successfully generated and stored audio via EdgeTTS: {}", audioUrl);
 
-            log.info("Generated and stored audio via EdgeTTS for text (length: {}): {}", text.length(), audioUrl);
             return audioUrl;
         } catch (Exception e) {
-            log.error("EdgeTTS failed, falling back or retrying: {}", e.getMessage());
+            log.error("❌ EdgeTTS synthesis failed: {}", e.getMessage(), e);
             throw e;
         }
     }
@@ -51,6 +58,8 @@ public class EdgeTextToSpeechService implements TextToSpeechService {
     @Override
     public boolean isAvailable() {
         try {
+            log.info("🔍 Checking EdgeTTS service availability at: {}", EDGE_TTS_API_URL);
+
             // Quick health check to see if EdgeTTS server is running
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
@@ -70,9 +79,14 @@ public class EdgeTextToSpeechService implements TextToSpeechService {
                 byte[].class
             );
 
-            return response.getStatusCode().is2xxSuccessful();
+            boolean available = response.getStatusCode().is2xxSuccessful();
+            log.info("🔍 EdgeTTS availability check: {} (HTTP {})",
+                available ? "✅ AVAILABLE" : "❌ NOT AVAILABLE",
+                response.getStatusCode());
+
+            return available;
         } catch (Exception e) {
-            log.debug("EdgeTTS service not available: {}", e.getMessage());
+            log.error("❌ EdgeTTS service not available: {} | URL: {}", e.getMessage(), EDGE_TTS_API_URL);
             return false;
         }
     }

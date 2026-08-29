@@ -62,8 +62,14 @@ public class QuestionGenerationService {
         log.info("Generated {} questions for assessment: {}", generatedQuestions.size(), assessment.getId());
 
         // Trigger async audio generation for LISTENING questions
-        log.info("Triggering audio generation for LISTENING questions...");
+        log.info("🎵 Triggering ASYNC audio generation for LISTENING questions...");
+        long listeningCount = generatedQuestions.stream()
+            .filter(q -> q.getModuleType().toString().equals("LISTENING"))
+            .count();
+        log.info("🎵 Total LISTENING questions: {}", listeningCount);
+
         audioGenerationService.generateAudioForQuestions(generatedQuestions);
+        log.info("🎵 Audio generation task submitted (async - will run in background)");
 
         return generatedQuestions;
     }
