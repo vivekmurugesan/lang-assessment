@@ -4,6 +4,7 @@ import com.langassessment.dto.AuthDTO;
 import com.langassessment.dto.GeneratedQuestionDTO;
 import com.langassessment.entity.Assessment;
 import com.langassessment.entity.AssessmentModule;
+import com.langassessment.entity.AssessmentQuestionSelection;
 import com.langassessment.entity.Question;
 import com.langassessment.repository.AssessmentModuleRepository;
 import com.langassessment.repository.AssessmentRepository;
@@ -202,6 +203,97 @@ public class QuestionGenerationController {
             log.error("Failed to reject question: {}", e.getMessage());
             return ResponseEntity.badRequest()
                     .body(new AuthDTO.ApiResponse<>(false, e.getMessage()));
+        }
+    }
+
+    @GetMapping("/{assessmentId}/validate-content")
+    @Transactional(readOnly = true)
+    public ResponseEntity<AuthDTO.ApiResponse<Map<String, Object>>> validateAssessmentContent(
+            @PathVariable Integer assessmentId) {
+        try {
+            Assessment assessment = assessmentRepository.findById(assessmentId)
+                    .orElseThrow(() -> new RuntimeException("Assessment not found"));
+
+            List<AssessmentQuestionSelection> selectedQuestions = selectionRepository
+                    .findByAssessmentOrderBySequenceNumber(assessment);
+
+            Map<String, Object> validation = new HashMap<>();
+            Map<String, Object> contentCheck = new HashMap<>();
+            boolean isReadyForCandidates = true;
+
+            List<String> issues = new java.util.ArrayList<>();
+
+            if (selectedQuestions.isEmpty()) {
+                isReadyForCandidates = false;
+                issues.add("No questions selected for this assessment");
+            } else {
+                // Group questions by module type
+                Map<String, List<AssessmentQuestionSelection>> byModule = selectedQuestions.stream()
+                        .collect(Collectors.groupingBy(
+                                sq -> sq.getQuestion().getModuleType().toString()
+                        ));
+
+                // Validate each module
+                for (Map.Entry<String, List<AssessmentQuestionSelection>> entry : byModule.entrySet()) {
+                    String moduleType = entry.getKey();
+                    List<AssessmentQuestionSelection> moduleQuestions = entry.getValue();
+
+                    Map<String, Object> moduleStatus = new HashMap<>();
+                    moduleStatus.put("total", moduleQuestions.size());
+
+                    if ("LISTENING".equals(moduleType) || "READING".equals(moduleType)) {
+                        // Check for options
+                        long withOptions = moduleQuestions.stream()
+                                .filter(sq -> sq.getQuestion().getQuestionOptionsUri() != null
+                                        && !sq.getQuestion().getQuestionOptionsUri().isEmpty())
+                                .count();
+                        moduleStatus.put("questionsWithOptions", withOptions);
+                        moduleStatus.put("optionsReady", withOptions == moduleQuestions.size());
+
+                        if (withOptions < moduleQuestions.size()) {
+                            isReadyForCandidates = false;
+                            issues.add(moduleType + ": " + (moduleQuestions.size() - withOptions)
+                                    + " question(s) missing answer options");
+                        }
+                    }
+
+                    if ("LISTENING".equals(moduleType)) {
+                        // Check for audio
+                        long withAudio = moduleQuestions.stream()
+                                .filter(sq -> sq.getQuestion().getAudioUrl() != null
+                                        && !sq.getQuestion().getAudioUrl().isEmpty())
+                                .count();
+                        moduleStatus.put("questionsWithAudio", withAudio);
+                        moduleStatus.put("audioReady", withAudio == moduleQuestions.size());
+
+                        if (withAudio < moduleQuestions.size()) {
+                            isReadyForCandidates = false;
+                            issues.add("LISTENING: " + (moduleQuestions.size() - withAudio)
+                                    + " question(s) missing audio content");
+                        }
+                    }
+
+                    contentCheck.put(moduleType, moduleStatus);
+                }
+            }
+
+            validation.put("isReadyForCandidates", isReadyForCandidates);
+            validation.put("issues", issues);
+            validation.put("contentByModule", contentCheck);
+            validation.put("totalQuestionsSelected", selectedQuestions.size());
+
+            log.info("Content validation for assessment {}: Ready={}, Issues={}",
+                    assessmentId, isReadyForCandidates, issues.size());
+
+            return ResponseEntity.ok(new AuthDTO.ApiResponse<>(
+                    true,
+                    isReadyForCandidates ? "All content ready for candidates" : "Content validation failed",
+                    validation
+            ));
+        } catch (Exception e) {
+            log.error("Failed to validate content: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(new AuthDTO.ApiResponse<>(false, "Validation failed: " + e.getMessage()));
         }
     }
 

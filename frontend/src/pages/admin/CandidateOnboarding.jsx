@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiPlus, FiCopy, FiTrash2, FiDownload, FiUpload, FiHome } from 'react-icons/fi';
+import { toast } from 'react-toastify';
 import api from '../../api/axiosConfig';
 
 const CandidateOnboarding = () => {
@@ -20,6 +21,7 @@ const CandidateOnboarding = () => {
   });
 
   const [bulkData, setBulkData] = useState('');
+  const [contentValidation, setContentValidation] = useState(null);
 
   useEffect(() => {
     loadAssessments();
@@ -29,6 +31,7 @@ const CandidateOnboarding = () => {
     if (selectedAssessment) {
       loadCandidates(selectedAssessment);
       loadAssessmentStatus(selectedAssessment);
+      validateAssessmentContent(selectedAssessment);
     }
   }, [selectedAssessment]);
 
@@ -62,6 +65,17 @@ const CandidateOnboarding = () => {
       }
     } catch (error) {
       console.error('Failed to load assessment status:', error);
+    }
+  };
+
+  const validateAssessmentContent = async (assessmentId) => {
+    try {
+      const response = await api.get(`/admin/questions/${assessmentId}/validate-content`);
+      if (response.data.success) {
+        setContentValidation(response.data.data);
+      }
+    } catch (error) {
+      console.error('Failed to validate content:', error);
     }
   };
 
@@ -191,10 +205,40 @@ const CandidateOnboarding = () => {
                 </div>
               )}
 
-              {assessmentStatus && assessmentStatus.approved > 0 && (
+              {contentValidation && !contentValidation.isReadyForCandidates && (
+                <div className="card mb-6 bg-red-50 border border-red-200">
+                  <div className="flex items-start gap-3">
+                    <div className="text-2xl">🔴</div>
+                    <div>
+                      <h3 className="font-bold text-red-900 mb-1">Content Not Ready for Candidates</h3>
+                      <p className="text-sm text-red-800 mb-2">
+                        Assessment has missing required content:
+                      </p>
+                      {contentValidation.issues && contentValidation.issues.length > 0 && (
+                        <div className="mb-3">
+                          {contentValidation.issues.map((issue, idx) => (
+                            <p key={idx} className="text-xs text-red-700 mb-1">• {issue}</p>
+                          ))}
+                        </div>
+                      )}
+                      <p className="text-xs text-red-700 mb-3">
+                        <strong>To proceed:</strong> Go to Assessment Setup → Validate Content Ready and resolve all issues
+                      </p>
+                      <button
+                        onClick={() => navigate('/admin/assessments')}
+                        className="text-sm font-medium text-red-600 hover:text-red-700 underline"
+                      >
+                        Go to Assessment Setup →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {assessmentStatus && assessmentStatus.approved > 0 && contentValidation && contentValidation.isReadyForCandidates && (
                 <div className="card mb-6 bg-green-50 border border-green-200 p-3">
                   <p className="text-sm text-green-800">
-                    ✓ <strong>{assessmentStatus.approved} questions approved</strong> - Ready for candidates
+                    ✓ <strong>{assessmentStatus.approved} questions approved</strong> with all required content - Ready for candidates
                   </p>
                 </div>
               )}
@@ -202,17 +246,17 @@ const CandidateOnboarding = () => {
               <div className="flex gap-2 mb-6">
                 <button
                   onClick={() => setShowAddForm(!showAddForm)}
-                  disabled={!assessmentStatus || assessmentStatus.approved === 0}
+                  disabled={!assessmentStatus || assessmentStatus.approved === 0 || !contentValidation || !contentValidation.isReadyForCandidates}
                   className="btn btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  title={!assessmentStatus || assessmentStatus.approved === 0 ? 'Approve questions first' : 'Add a candidate'}
+                  title={!assessmentStatus || assessmentStatus.approved === 0 ? 'Approve questions first' : !contentValidation || !contentValidation.isReadyForCandidates ? 'Validate and prepare all content first' : 'Add a candidate'}
                 >
                   <FiPlus size={18} /> Add Candidate
                 </button>
                 <button
                   onClick={() => setShowBulkForm(!showBulkForm)}
-                  disabled={!assessmentStatus || assessmentStatus.approved === 0}
+                  disabled={!assessmentStatus || assessmentStatus.approved === 0 || !contentValidation || !contentValidation.isReadyForCandidates}
                   className="btn btn-secondary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  title={!assessmentStatus || assessmentStatus.approved === 0 ? 'Approve questions first' : 'Bulk upload candidates'}
+                  title={!assessmentStatus || assessmentStatus.approved === 0 ? 'Approve questions first' : !contentValidation || !contentValidation.isReadyForCandidates ? 'Validate and prepare all content first' : 'Bulk upload candidates'}
                 >
                   <FiUpload size={18} /> Bulk Upload
                 </button>

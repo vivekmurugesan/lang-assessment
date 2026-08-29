@@ -188,6 +188,8 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
   const [showCatalogSelection, setShowCatalogSelection] = useState(false);
   const [catalogSelecting, setCatalogSelecting] = useState(false);
   const [questionStatus, setQuestionStatus] = useState(null);
+  const [contentValidation, setContentValidation] = useState(null);
+  const [validatingContent, setValidatingContent] = useState(false);
   const [progressModal, setProgressModal] = useState({
     isOpen: false,
     status: 'generating', // 'generating', 'complete', 'error'
@@ -220,6 +222,24 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
       }
     } catch (error) {
       console.error('Failed to load question status:', error);
+    }
+  };
+
+  const validateAssessmentContent = async (assessmentId) => {
+    setValidatingContent(true);
+    try {
+      const response = await api.get(`/admin/questions/${assessmentId}/validate-content`);
+      if (response.data.success) {
+        setContentValidation(response.data.data);
+        if (!response.data.data.isReadyForCandidates) {
+          toast.error('Assessment content is not ready for candidates. Please fix the issues listed.');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to validate content:', error);
+      toast.error('Failed to validate assessment content');
+    } finally {
+      setValidatingContent(false);
     }
   };
 
@@ -402,6 +422,49 @@ const AssessmentItem = ({ assessment, expanded, onToggleExpand, onDelete }) => {
               {questionStatus.selected > 0 && (
                 <div className="mt-2 text-xs text-purple-700 bg-purple-50 p-2 rounded border border-purple-200">
                   ✓ {questionStatus.selected} questions selected and ready for candidates
+                </div>
+              )}
+
+              {questionStatus.selected > 0 && (
+                <button
+                  onClick={() => validateAssessmentContent(assessment.id)}
+                  disabled={validatingContent}
+                  className="mt-3 btn btn-sm bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-gray-400"
+                >
+                  {validatingContent ? 'Validating...' : '🔍 Validate Content Ready'}
+                </button>
+              )}
+
+              {contentValidation && (
+                <div className={`mt-4 p-4 rounded border ${
+                  contentValidation.isReadyForCandidates
+                    ? 'bg-green-50 border-green-200'
+                    : 'bg-red-50 border-red-200'
+                }`}>
+                  <p className={`font-semibold ${
+                    contentValidation.isReadyForCandidates
+                      ? 'text-green-900'
+                      : 'text-red-900'
+                  }`}>
+                    {contentValidation.isReadyForCandidates ? '✓ Assessment Ready for Candidates' : '⚠ Assessment Not Ready for Candidates'}
+                  </p>
+                  {contentValidation.issues && contentValidation.issues.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {contentValidation.issues.map((issue, idx) => (
+                        <p key={idx} className="text-sm text-red-800">• {issue}</p>
+                      ))}
+                    </div>
+                  )}
+                  {contentValidation.contentByModule && Object.entries(contentValidation.contentByModule).map(([module, details]) => (
+                    <div key={module} className="mt-2 text-xs">
+                      <p className="font-medium">{module}:</p>
+                      <p className="ml-2 text-gray-700">
+                        {details.total} questions
+                        {details.optionsReady === false && ` (${details.questionsWithOptions}/${details.total} with options)`}
+                        {details.audioReady === false && ` (${details.questionsWithAudio}/${details.total} with audio)`}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
