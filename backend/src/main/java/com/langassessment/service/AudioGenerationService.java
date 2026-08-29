@@ -26,12 +26,26 @@ public class AudioGenerationService {
     @Async
     @Transactional
     public void generateAudioForQuestions(List<Question> questions) {
-        for (Question question : questions) {
-            if (question.getModuleType() == Question.ModuleType.LISTENING
-                && question.getAudioGenerationStatus() == Question.ContentGenerationStatus.PENDING) {
-                generateAudioForQuestion(question);
-            }
+        log.info("🎵 [ASYNC] Audio generation started for {} questions", questions.size());
+
+        List<Question> listeningQuestions = questions.stream()
+            .filter(q -> q.getModuleType() == Question.ModuleType.LISTENING
+                && q.getAudioGenerationStatus() == Question.ContentGenerationStatus.PENDING)
+            .toList();
+
+        log.info("🎵 [ASYNC] Found {} LISTENING questions requiring audio generation", listeningQuestions.size());
+
+        if (listeningQuestions.isEmpty()) {
+            log.info("🎵 [ASYNC] No LISTENING questions to process");
+            return;
         }
+
+        for (Question question : listeningQuestions) {
+            log.info("🎵 [ASYNC] Processing audio generation for LISTENING question ID: {}", question.getId());
+            generateAudioForQuestion(question);
+        }
+
+        log.info("🎵 [ASYNC] Audio generation batch completed");
     }
 
     /**
@@ -39,23 +53,33 @@ public class AudioGenerationService {
      */
     @Transactional
     public void generateAudioForQuestion(Question question) {
+        log.info("🎵 Processing question ID {}, current status: {}", question.getId(), question.getAudioGenerationStatus());
+
         if (question.getAudioGenerationStatus() != Question.ContentGenerationStatus.PENDING) {
+            log.debug("⏭️  Skipping question {} - status is {}, not PENDING",
+                question.getId(), question.getAudioGenerationStatus());
             return;
         }
 
         try {
+            log.info("🎵 Setting status to GENERATING for question {}", question.getId());
             question.setAudioGenerationStatus(Question.ContentGenerationStatus.GENERATING);
             questionRepository.save(question);
 
+            log.info("🔍 Checking if TTS service is available...");
             if (!textToSpeechService.isAvailable()) {
-                log.warn("Text-to-Speech service not available. Audio generation skipped for question {}", question.getId());
+                log.warn("❌ Text-to-Speech service NOT available for question {}", question.getId());
                 question.setAudioGenerationStatus(Question.ContentGenerationStatus.PENDING);
-                question.setAudioGenerationError("TTS service not configured. Please configure TTS API credentials.");
+                question.setAudioGenerationError("TTS service not available. Check EdgeTTS/Google TTS configuration.");
                 questionRepository.save(question);
                 return;
             }
 
+            log.info("✅ TTS service is available. Proceeding with audio generation");
             String languageCode = getLanguageCode(question.getLanguage());
+            log.info("🌐 Using language code: {}", languageCode);
+
+            log.info("📝 Question text length: {} chars", question.getQuestionText().length());
             String audioUrl = textToSpeechService.synthesizeAndStore(
                 question.getQuestionText(),
                 languageCode,
@@ -67,10 +91,11 @@ public class AudioGenerationService {
             question.setAudioGenerationError(null);
             questionRepository.save(question);
 
-            log.info("Successfully generated audio for question {}: {}", question.getId(), audioUrl);
+            log.info("✅ Successfully generated audio for question {}: {}", question.getId(), audioUrl);
 
         } catch (Exception e) {
-            log.error("Failed to generate audio for question {}: {}", question.getId(), e.getMessage(), e);
+            log.error("❌ Failed to generate audio for question {}: {} | Cause: {}",
+                question.getId(), e.getMessage(), e.getCause(), e);
             question.setAudioGenerationStatus(Question.ContentGenerationStatus.FAILED);
             question.setAudioGenerationError(e.getMessage());
             questionRepository.save(question);
