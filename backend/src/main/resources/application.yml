@@ -75,7 +75,7 @@ gemini:
     url: https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent
 
 tts:
-  provider: ${TTS_PROVIDER:google}
+  provider: ${TTS_PROVIDER:edge}
   google:
     api:
       key: ${GOOGLE_TTS_API_KEY:}
@@ -85,6 +85,9 @@ tts:
       key: ${ELEVENLABS_API_KEY:}
       url: https://api.elevenlabs.io/v1/text-to-speech
       voice-id: ${ELEVENLABS_VOICE_ID:EXAVITQu4vr4xnSDxMaL}
+  edge:
+    api:
+      url: ${EDGE_TTS_API_URL:http://localhost:5001/tts}
 
 mail:
   host: ${MAIL_HOST:smtp.gmail.com}
