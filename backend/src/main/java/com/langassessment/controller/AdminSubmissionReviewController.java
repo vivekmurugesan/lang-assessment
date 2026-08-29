@@ -69,6 +69,53 @@ public class AdminSubmissionReviewController {
         }
     }
 
+    @GetMapping("/candidate/{candidateId}")
+    @Transactional(readOnly = true)
+    public ResponseEntity<AuthDTO.ApiResponse<AssessmentSubmissionDTO>> getSubmissionByCandidate(
+            @PathVariable Integer candidateId) {
+        try {
+            List<AssessmentSubmission> submissions = submissionRepository.findAll().stream()
+                    .filter(s -> s.getAssessmentCandidate().getId().equals(candidateId))
+                    .toList();
+
+            if (submissions.isEmpty()) {
+                return ResponseEntity.badRequest()
+                        .body(new AuthDTO.ApiResponse<>(false, "No submission found for this candidate"));
+            }
+
+            AssessmentSubmission submission = submissions.get(0);
+            List<QuestionResponse> responses = responseRepository.findBySubmission(submission);
+            int totalQuestions = responses.size();
+            int correctAnswers = (int) responses.stream()
+                    .filter(r -> r.getScore() != null && r.getScore() > 0)
+                    .count();
+
+            List<QuestionResponseDTO> responsesDtos = responses.stream()
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
+
+            AssessmentSubmissionDTO dto = AssessmentSubmissionDTO.builder()
+                    .id(submission.getId())
+                    .assessmentCandidateId(submission.getAssessmentCandidate().getId())
+                    .status(submission.getStatus().toString())
+                    .totalScore(submission.getTotalScore())
+                    .cefrLevel(submission.getCefrLevel())
+                    .evaluatorNotes(submission.getEvaluatorNotes())
+                    .totalQuestions(totalQuestions)
+                    .correctAnswers(correctAnswers)
+                    .responses(responsesDtos)
+                    .submittedAt(submission.getSubmittedAt())
+                    .evaluatedAt(submission.getEvaluatedAt())
+                    .build();
+
+            return ResponseEntity.ok(new AuthDTO.ApiResponse<>(true, "Submission details retrieved", dto));
+        } catch (Exception e) {
+            log.error("Failed to retrieve submission: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(new AuthDTO.ApiResponse<>(false, e.getMessage()));
+        }
+    }
+
     @GetMapping("/{submissionId}")
     @Transactional(readOnly = true)
     public ResponseEntity<AuthDTO.ApiResponse<AssessmentSubmissionDTO>> getSubmissionDetails(
