@@ -20,8 +20,8 @@ public class StorageService {
 
     private final MinioClient minioClient;
 
-    @Value("${minio.url}")
-    private String minioUrl;
+    @Value("${minio.endpoint}")
+    private String minioEndpoint;
 
     @Value("${minio.bucket.assessments}")
     private String assessmentsBucket;
@@ -29,10 +29,14 @@ public class StorageService {
     @Value("${minio.bucket.submissions}")
     private String submissionsBucket;
 
+    @Value("${minio.bucket.questions}")
+    private String questionsBucket;
+
     public void initializeBuckets() {
         try {
             createBucketIfNotExists(assessmentsBucket);
             createBucketIfNotExists(submissionsBucket);
+            createBucketIfNotExists(questionsBucket);
             log.info("MinIO buckets initialized");
         } catch (Exception e) {
             log.error("Failed to initialize MinIO buckets: {}", e.getMessage());
@@ -48,7 +52,11 @@ public class StorageService {
     }
 
     public String uploadFile(MultipartFile file, String bucketType) throws Exception {
-        String bucketName = bucketType.equals("assessment") ? assessmentsBucket : submissionsBucket;
+        String bucketName = switch (bucketType) {
+            case "assessment" -> assessmentsBucket;
+            case "questions" -> questionsBucket;
+            default -> submissionsBucket;
+        };
         String fileName = generateFileName(file.getOriginalFilename());
 
         try (InputStream inputStream = file.getInputStream()) {
@@ -66,7 +74,11 @@ public class StorageService {
     }
 
     public InputStream downloadFile(String fileName, String bucketType) throws Exception {
-        String bucketName = bucketType.equals("assessment") ? assessmentsBucket : submissionsBucket;
+        String bucketName = switch (bucketType) {
+            case "assessment" -> assessmentsBucket;
+            case "questions" -> questionsBucket;
+            default -> submissionsBucket;
+        };
 
         return minioClient.getObject(
                 GetObjectArgs.builder()
@@ -77,7 +89,11 @@ public class StorageService {
     }
 
     public void deleteFile(String fileName, String bucketType) throws Exception {
-        String bucketName = bucketType.equals("assessment") ? assessmentsBucket : submissionsBucket;
+        String bucketName = switch (bucketType) {
+            case "assessment" -> assessmentsBucket;
+            case "questions" -> questionsBucket;
+            default -> submissionsBucket;
+        };
 
         try {
             minioClient.removeObject(
@@ -97,7 +113,11 @@ public class StorageService {
     }
 
     public String generatePresignedUrl(String fileName, String bucketType) throws Exception {
-        String bucketName = bucketType.equals("assessment") ? assessmentsBucket : submissionsBucket;
+        String bucketName = switch (bucketType) {
+            case "assessment" -> assessmentsBucket;
+            case "questions" -> questionsBucket;
+            default -> submissionsBucket;
+        };
 
         try {
             return minioClient.getPresignedObjectUrl(
@@ -110,7 +130,7 @@ public class StorageService {
         } catch (Exception e) {
             log.warn("Failed to generate presigned URL: {}", e.getMessage());
             // Fallback: return direct URL (less secure but works)
-            return String.format("%s/%s/%s", minioUrl, bucketName, fileName);
+            return String.format("%s/%s/%s", minioEndpoint, bucketName, fileName);
         }
     }
 
