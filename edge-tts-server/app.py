@@ -55,7 +55,7 @@ def text_to_speech():
 
         text = data.get("text", "").strip()
         voice = data.get("voice", "en-US-AriaNeural")
-        rate = data.get("rate", "1.0")
+        rate = data.get("rate", "+0%")
 
         if not text:
             return jsonify({"error": "Text cannot be empty"}), 400
@@ -63,7 +63,7 @@ def text_to_speech():
         if len(text) > 5000:
             return jsonify({"error": "Text too long (max 5000 characters)"}), 400
 
-        logger.info(f"Generating audio for: {text[:50]}... (voice: {voice})")
+        logger.info(f"Generating audio for: {text[:50]}... (voice: {voice}, rate: {rate})")
 
         # Generate audio asynchronously
         audio_bytes = asyncio.run(generate_audio(text, voice, rate))
@@ -106,7 +106,7 @@ def index():
             "body": {
                 "text": "Text to convert to speech",
                 "voice": "en-US-AriaNeural (optional, defaults to en-US-AriaNeural)",
-                "rate": "1.0 (optional, range 0.5 to 2.0)"
+                "rate": "+0% (optional, format: +10%, -10%, etc. defaults to +0%)"
             },
             "response": "MP3 audio binary",
             "example": {
