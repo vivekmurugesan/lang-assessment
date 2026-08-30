@@ -10,11 +10,14 @@ import com.langassessment.entity.User;
 import com.langassessment.repository.AssessmentSubmissionRepository;
 import com.langassessment.repository.QuestionResponseRepository;
 import com.langassessment.service.SubmissionService;
+import com.langassessment.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,6 +38,10 @@ public class AdminSubmissionReviewController {
     private final AssessmentSubmissionRepository submissionRepository;
     private final QuestionResponseRepository responseRepository;
     private final SubmissionService submissionService;
+    private final JavaMailSender mailSender;
+
+    @org.springframework.beans.factory.annotation.Value("${mail.from}")
+    private String fromEmail;
 
     @GetMapping
     @Transactional(readOnly = true)
@@ -285,7 +292,21 @@ public class AdminSubmissionReviewController {
             );
 
             log.info("Scorecard message prepared for {}: {}", candidateEmail, message);
-            return ResponseEntity.ok(new AuthDTO.ApiResponse<>(true, "Scorecard shared successfully"));
+
+            try {
+                SimpleMailMessage emailMessage = new SimpleMailMessage();
+                emailMessage.setFrom(fromEmail);
+                emailMessage.setTo(candidateEmail);
+                emailMessage.setSubject("Your Language Assessment Results");
+                emailMessage.setText(message);
+                mailSender.send(emailMessage);
+                log.info("✅ Scorecard email sent successfully to: {}", candidateEmail);
+                return ResponseEntity.ok(new AuthDTO.ApiResponse<>(true, "Scorecard shared successfully"));
+            } catch (Exception emailException) {
+                log.error("❌ Failed to send scorecard email to {}: {}", candidateEmail, emailException.getMessage(), emailException);
+                return ResponseEntity.status(500)
+                        .body(new AuthDTO.ApiResponse<>(false, "Scorecard prepared but failed to send email: " + emailException.getMessage()));
+            }
 
         } catch (Exception e) {
             log.error("Failed to share scorecard: {}", e.getMessage());
