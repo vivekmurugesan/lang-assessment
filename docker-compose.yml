@@ -87,7 +87,7 @@ services:
       EVALUATION_SERVICE_URL: http://evaluation-service:5000
       GEMINI_API_KEY: ${GEMINI_API_KEY}
       TTS_PROVIDER: ${TTS_PROVIDER:-edge}
-      EDGE_TTS_API_URL: ${EDGE_TTS_API_URL:-http://edge-tts:5001/tts}
+      TTS_EDGE_API_URL: ${TTS_EDGE_API_URL:-http://edge-tts:5001/tts}
       MAIL_HOST: ${MAIL_HOST}
       MAIL_PORT: ${MAIL_PORT}
       MAIL_USERNAME: ${MAIL_USERNAME}
