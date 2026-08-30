@@ -149,17 +149,25 @@ public class QuestionService {
     public Object fetchQuestionOptions(String questionOptionsUri) {
         try {
             if (questionOptionsUri == null || questionOptionsUri.isEmpty()) {
+                log.warn("⚠️  Question options URI is null or empty");
                 return null;
             }
 
+            log.debug("📥 Fetching question options from URI: {}", questionOptionsUri);
+
             // Extract object name from MinIO URL
             String objectName = extractObjectNameFromUrl(questionOptionsUri);
+            log.debug("📦 Extracted object name: {}", objectName);
+
             InputStream inputStream = storageService.downloadFile(objectName, "questions");
+            log.debug("✅ Downloaded from MinIO bucket 'questions', key: {}", objectName);
 
             // Read JSON content
-            return objectMapper.readValue(inputStream, Object.class);
+            Object options = objectMapper.readValue(inputStream, Object.class);
+            log.debug("✅ Successfully parsed question options");
+            return options;
         } catch (Exception e) {
-            log.error("Failed to fetch question options: {}", e.getMessage());
+            log.error("❌ Failed to fetch question options from: {} | Error: {}", questionOptionsUri, e.getMessage(), e);
             return null;
         }
     }
