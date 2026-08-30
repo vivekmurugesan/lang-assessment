@@ -23,7 +23,7 @@ public class EdgeTextToSpeechService implements TextToSpeechService {
     private final RestTemplate restTemplate;
     private final MinIOService minIOService;
 
-    @Value("${edge.tts.api.url:http://edge-tts:5001/tts}")
+    @Value("${tts.edge.api.url:http://edge-tts:5001/tts}")
     private String edgeTtsApiUrl;
 
     @Override
