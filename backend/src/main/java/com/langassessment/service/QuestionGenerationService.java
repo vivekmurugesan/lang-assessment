@@ -482,7 +482,7 @@ public class QuestionGenerationService {
 
     private String uploadLargeContentToMinIO(String content, String contentType) {
         try {
-            String objectName = String.format("questions/%s/%d-%s.json",
+            String objectName = String.format("%s/%d-%s.json",
                     contentType,
                     System.currentTimeMillis(),
                     java.util.UUID.randomUUID().toString().substring(0, 8));

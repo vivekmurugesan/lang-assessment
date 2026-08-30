@@ -87,7 +87,7 @@ tts:
       voice-id: ${ELEVENLABS_VOICE_ID:EXAVITQu4vr4xnSDxMaL}
   edge:
     api:
-      url: ${EDGE_TTS_API_URL:http://localhost:5001/tts}
+      url: ${EDGE_TTS_API_URL:http://edge-tts:5001/tts}
 
 mail:
   host: ${MAIL_HOST:smtp.gmail.com}
