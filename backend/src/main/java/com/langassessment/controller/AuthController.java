@@ -58,6 +58,18 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<AuthDTO.ApiResponse<String>> logout() {
+        try {
+            log.info("User logout requested");
+            return ResponseEntity.ok(new AuthDTO.ApiResponse<>(true, "Logout successful. Please clear your browser storage and refresh.", "logout"));
+        } catch (Exception e) {
+            log.error("Logout failed: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(new AuthDTO.ApiResponse<>(false, "Logout failed"));
+        }
+    }
+
     private String extractToken(String bearerToken) {
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
