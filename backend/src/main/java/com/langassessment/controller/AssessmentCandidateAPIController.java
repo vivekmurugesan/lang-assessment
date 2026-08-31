@@ -279,13 +279,18 @@ public class AssessmentCandidateAPIController {
     }
 
     private QuestionWithOptionsDTO convertToQuestionDTO(Question question, String moduleType) {
+        // Return backend endpoint URL instead of direct MinIO URL
+        // This allows frontend to fetch audio through the backend which can access MinIO
+        String audioUrl = (question.getAudioUrl() != null) ?
+            "/api/candidate/questions/" + question.getId() + "/audio" : null;
+
         return QuestionWithOptionsDTO.builder()
                 .id(question.getId())
                 .moduleType(moduleType)
                 .cefrLevel(question.getCefrLevel())
                 .questionText(question.getQuestionText())
                 .questionNumber(question.getQuestionNumber())
-                .audioUrl(question.getAudioUrl())
+                .audioUrl(audioUrl)
                 .imageUrl(question.getImageUrl())
                 .questionOptionsUri(question.getQuestionOptionsUri())
                 .explanationUri(question.getExplanationUri())
