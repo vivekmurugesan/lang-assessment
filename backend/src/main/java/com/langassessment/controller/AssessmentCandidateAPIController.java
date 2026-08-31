@@ -174,7 +174,6 @@ public class AssessmentCandidateAPIController {
                     .header("Content-Length", String.valueOf(audioData.length))
                     .header("Accept-Ranges", "bytes")
                     .header("Cache-Control", "public, max-age=3600")
-                    .header("Access-Control-Allow-Origin", "*")
                     .body(audioData);
         } catch (Exception e) {
             log.error("❌ Failed to retrieve audio: {} | {}", e.getMessage(), e.getCause(), e);
