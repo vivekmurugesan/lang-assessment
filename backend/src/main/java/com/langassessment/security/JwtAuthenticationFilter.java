@@ -57,10 +57,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private String getJwtFromRequest(HttpServletRequest request) {
+        // Try to get token from Authorization header first
         String bearerToken = request.getHeader("Authorization");
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
+
+        // Fallback to query parameter for audio/resource requests
+        String tokenParam = request.getParameter("token");
+        if (StringUtils.hasText(tokenParam)) {
+            log.debug("JWT token found in query parameter for path: {}", request.getRequestURI());
+            return tokenParam;
+        }
+
         return null;
     }
 }

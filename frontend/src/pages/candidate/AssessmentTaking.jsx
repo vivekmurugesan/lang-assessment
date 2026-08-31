@@ -28,6 +28,11 @@ const AssessmentTaking = () => {
 
   const currentQuestion = questions[currentQuestionIndex];
 
+  const getAudioUrl = (questionId) => {
+    const token = localStorage.getItem('token');
+    return `${API_BASE_URL}/candidate/questions/${questionId}/audio${token ? `?token=${token}` : ''}`;
+  };
+
   useEffect(() => {
     if (currentQuestion?.questionOptionsUri && !questionOptions[currentQuestion.id]) {
       fetchQuestionOptions(currentQuestion);
@@ -288,7 +293,7 @@ const AssessmentTaking = () => {
                         <div className="mb-3">
                           <audio
                             ref={audioPlayerRef}
-                            src={`${API_BASE_URL}/candidate/questions/${currentQuestion.id}/audio`}
+                            src={getAudioUrl(currentQuestion.id)}
                             className="w-full"
                             controls
                             crossOrigin="anonymous"
