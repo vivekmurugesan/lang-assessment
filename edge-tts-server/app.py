@@ -10,6 +10,7 @@ import io
 import logging
 from flask import Flask, request, jsonify
 import edge_tts
+from gtts import gTTS
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -65,8 +66,19 @@ def text_to_speech():
 
         logger.info(f"Generating audio for: {text[:50]}... (voice: {voice}, rate: {rate})")
 
-        # Generate audio asynchronously
-        audio_bytes = asyncio.run(generate_audio(text, voice, rate))
+        try:
+            # Try EdgeTTS first
+            audio_bytes = asyncio.run(generate_audio(text, voice, rate))
+            logger.info("✅ Audio generated using EdgeTTS")
+        except Exception as edge_tts_error:
+            logger.warning(f"⚠️  EdgeTTS failed, falling back to gTTS: {str(edge_tts_error)}")
+            try:
+                # Fallback to gTTS
+                audio_bytes = generate_audio_gtts(text)
+                logger.info("✅ Audio generated using gTTS (fallback)")
+            except Exception as gtts_error:
+                logger.error(f"❌ Both EdgeTTS and gTTS failed: {str(gtts_error)}")
+                return jsonify({"error": f"Both TTS services failed: {str(gtts_error)}"}), 500
 
         # Return as MP3 binary
         return audio_bytes, 200, {"Content-Type": "audio/mpeg"}
@@ -74,6 +86,19 @@ def text_to_speech():
     except Exception as e:
         logger.error(f"TTS error: {str(e)}", exc_info=True)
         return jsonify({"error": str(e)}), 500
+
+
+def generate_audio_gtts(text: str) -> bytes:
+    """Generate audio using gTTS (fallback)"""
+    try:
+        tts = gTTS(text=text, lang='en', slow=False)
+        audio_buffer = io.BytesIO()
+        tts.write_to_fp(audio_buffer)
+        audio_buffer.seek(0)
+        return audio_buffer.getvalue()
+    except Exception as e:
+        logger.error(f"❌ gTTS generation failed: {str(e)}", exc_info=True)
+        raise
 
 
 async def generate_audio(text: str, voice: str, rate: str) -> bytes:
