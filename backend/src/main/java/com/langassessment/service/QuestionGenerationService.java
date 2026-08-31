@@ -152,7 +152,7 @@ public class QuestionGenerationService {
 
     private String getModuleSpecificGuidance(String moduleType) {
         return switch (moduleType) {
-            case "LISTENING" -> "- Each question should have ONLY the question text, NO instructions like 'Listen to the audio...'\n- Do NOT include words like 'Listen', 'Audio', 'Transcript' in the question text\n- The question should be clear and standalone without instruction preamble\n- Create 4 multiple-choice options (A, B, C, D)";
+            case "LISTENING" -> "- IMPORTANT: Include background context/conversation that will be in the audio\n- Format: Start with the conversation or context (2-3 sentences), then ask the question\n- Example: 'In a conversation at a cafe, Sarah asks Tom about his weekend plans. Tom explains he is going hiking on Saturday and visiting his family on Sunday. Question: What are Tom's plans for Saturday?'\n- Do NOT start with 'Listen to...' or 'You will hear...'\n- The full questionText should contain both context AND question\n- Create 4 multiple-choice options (A, B, C, D)";
             case "READING" -> "- Base questions on short text passages\n- Create 4 multiple-choice options (A, B, C, D)";
             case "WRITING" -> "- Provide writing prompts (NOT multiple-choice) that ask for open-ended text responses\n- Include context and word count guidance if appropriate\n- Mark type as 'essay', NOT 'multiple-choice'\n- Leave options array empty";
             case "SPOKEN_INTERACTION" -> "- Create realistic conversational scenarios where candidate responds to a prompt\n- NOT multiple-choice - candidate will record their response\n- Give clear context and what the candidate should do\n- Mark type as 'short-answer', NOT 'multiple-choice'\n- Leave options array empty";
