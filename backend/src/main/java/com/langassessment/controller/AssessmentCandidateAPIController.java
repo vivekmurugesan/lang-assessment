@@ -150,17 +150,30 @@ public class AssessmentCandidateAPIController {
     public ResponseEntity<byte[]> getQuestionAudio(
             @PathVariable Integer questionId) {
         try {
+            log.info("🎵 Audio endpoint called for question ID: {}", questionId);
             Question question = questionService.getQuestionById(questionId);
-            if (question == null || question.getAudioUrl() == null) {
+
+            if (question == null) {
+                log.warn("❌ Question not found with ID: {}", questionId);
                 return ResponseEntity.notFound().build();
             }
 
+            log.info("✅ Question found. Audio URL: {}", question.getAudioUrl());
+
+            if (question.getAudioUrl() == null) {
+                log.warn("⚠️ Audio URL is null for question ID: {}", questionId);
+                return ResponseEntity.notFound().build();
+            }
+
+            log.info("📥 Fetching audio content from: {}", question.getAudioUrl());
             byte[] audioData = questionService.fetchAudioContent(question.getAudioUrl());
+            log.info("✅ Audio data retrieved: {} bytes", audioData.length);
+
             return ResponseEntity.ok()
                     .header("Content-Type", "audio/mpeg")
                     .body(audioData);
         } catch (Exception e) {
-            log.error("Failed to retrieve audio: {}", e.getMessage());
+            log.error("❌ Failed to retrieve audio: {} | {}", e.getMessage(), e.getCause(), e);
             return ResponseEntity.notFound().build();
         }
     }
@@ -283,6 +296,11 @@ public class AssessmentCandidateAPIController {
         // This allows frontend to fetch audio through the backend which can access MinIO
         String audioUrl = (question.getAudioUrl() != null) ?
             "/api/candidate/questions/" + question.getId() + "/audio" : null;
+
+        if (question.getModuleType() == Question.ModuleType.LISTENING) {
+            log.debug("🎵 LISTENING Question ID: {}, DB Audio URL: {}, Response Audio URL: {}",
+                question.getId(), question.getAudioUrl(), audioUrl);
+        }
 
         return QuestionWithOptionsDTO.builder()
                 .id(question.getId())
