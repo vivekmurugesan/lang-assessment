@@ -62,6 +62,15 @@ public class AudioGenerationService {
         }
 
         try {
+            // Validate question text before processing
+            if (question.getQuestionText() == null || question.getQuestionText().trim().isEmpty()) {
+                log.warn("⚠️  Question {} has null or empty text, skipping audio generation", question.getId());
+                question.setAudioGenerationStatus(Question.ContentGenerationStatus.FAILED);
+                question.setAudioGenerationError("Question text is empty or null");
+                questionRepository.saveAndFlush(question);
+                return;
+            }
+
             log.info("🎵 Setting status to GENERATING for question {}", question.getId());
             question.setAudioGenerationStatus(Question.ContentGenerationStatus.GENERATING);
             questionRepository.saveAndFlush(question);
@@ -79,9 +88,10 @@ public class AudioGenerationService {
             String languageCode = getLanguageCode(question.getLanguage());
             log.info("🌐 Using language code: {}", languageCode);
 
-            log.info("📝 Question text length: {} chars", question.getQuestionText().length());
+            String audioText = cleanAudioText(question.getQuestionText());
+            log.info("📝 Question text length: {} chars (original: {})", audioText.length(), question.getQuestionText().length());
             String audioUrl = textToSpeechService.synthesizeAndStore(
-                question.getQuestionText(),
+                audioText,
                 languageCode,
                 Optional.empty()
             );
@@ -131,5 +141,24 @@ public class AudioGenerationService {
             case "ZH" -> "zh-CN";
             default -> "en-US";
         };
+    }
+
+    private String cleanAudioText(String questionText) {
+        if (questionText == null) return "";
+
+        // Remove common instruction prefixes that should not be in audio
+        String cleaned = questionText
+            .replaceAll("(?i)listen to the audio[\\s.,]*and answer[\\s.,]*the question[.:]?\\s*", "")
+            .replaceAll("(?i)\\[audio transcript\\]", "")
+            .replaceAll("(?i)audio transcript[.:]?\\s*", "")
+            .replaceAll("(?i)listen to.*?answer[.:]?\\s*", "")
+            .trim();
+
+        if (!cleaned.isEmpty()) {
+            log.debug("🧹 Cleaned audio text: removed {} chars", questionText.length() - cleaned.length());
+            return cleaned;
+        }
+
+        return questionText.trim();
     }
 }

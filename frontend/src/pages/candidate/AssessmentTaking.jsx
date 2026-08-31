@@ -290,6 +290,7 @@ const AssessmentTaking = () => {
                   <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
                     {currentQuestion?.audioUrl ? (
                       <>
+                        <p className="text-sm font-semibold text-blue-900 mb-3">📢 Listen to the audio and answer the question below</p>
                         <div className="mb-3">
                           <audio
                             ref={audioPlayerRef}
@@ -303,7 +304,7 @@ const AssessmentTaking = () => {
                             }}
                           />
                         </div>
-                        <p className="text-sm text-gray-600">Click play to listen to the audio, then answer the question below</p>
+                        <p className="text-xs text-gray-500 mt-2">💡 Tip: You can play the audio multiple times. Click the play button to listen.</p>
                       </>
                     ) : (
                       <div className="text-center py-6">
