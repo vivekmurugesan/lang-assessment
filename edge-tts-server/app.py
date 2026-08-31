@@ -78,16 +78,20 @@ def text_to_speech():
 
 async def generate_audio(text: str, voice: str, rate: str) -> bytes:
     """Generate audio using EdgeTTS"""
-    communicate = edge_tts.Communicate(text=text, voice=voice, rate=rate)
+    try:
+        communicate = edge_tts.Communicate(text=text, voice=voice, rate=rate)
+        audio_buffer = io.BytesIO()
 
-    audio_buffer = io.BytesIO()
+        async for chunk in communicate.stream():
+            if chunk["type"] == "audio":
+                audio_buffer.write(chunk["data"])
 
-    async for chunk in communicate.stream():
-        if chunk["type"] == "audio":
-            audio_buffer.write(chunk["data"])
-
-    audio_buffer.seek(0)
-    return audio_buffer.getvalue()
+        audio_buffer.seek(0)
+        logger.info(f"✅ Audio generated successfully for voice: {voice}")
+        return audio_buffer.getvalue()
+    except Exception as e:
+        logger.error(f"❌ EdgeTTS generation failed: {str(e)}", exc_info=True)
+        raise
 
 
 @app.route("/", methods=["GET"])
