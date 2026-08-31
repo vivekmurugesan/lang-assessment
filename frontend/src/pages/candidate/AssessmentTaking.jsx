@@ -289,6 +289,7 @@ const AssessmentTaking = () => {
                             src={`/api/candidate/questions/${currentQuestion.id}/audio`}
                             className="w-full"
                             controls
+                            crossOrigin="anonymous"
                             onError={(e) => {
                               console.error('Audio playback error:', e);
                               toast.error('Failed to load audio. Please try refreshing the page.');
