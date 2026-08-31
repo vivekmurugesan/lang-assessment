@@ -4,6 +4,8 @@ import { FiChevronLeft, FiChevronRight, FiVolume2, FiMic, FiPause, FiSave, FiSen
 import { toast } from 'react-toastify';
 import api from '../../api/axiosConfig';
 
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+
 const AssessmentTaking = () => {
   const { secureLink } = useParams();
   const navigate = useNavigate();
@@ -286,7 +288,7 @@ const AssessmentTaking = () => {
                         <div className="mb-3">
                           <audio
                             ref={audioPlayerRef}
-                            src={`/api/candidate/questions/${currentQuestion.id}/audio`}
+                            src={`${API_BASE_URL}/candidate/questions/${currentQuestion.id}/audio`}
                             className="w-full"
                             controls
                             crossOrigin="anonymous"
