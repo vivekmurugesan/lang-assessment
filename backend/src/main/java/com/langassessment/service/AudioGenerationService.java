@@ -64,14 +64,14 @@ public class AudioGenerationService {
         try {
             log.info("🎵 Setting status to GENERATING for question {}", question.getId());
             question.setAudioGenerationStatus(Question.ContentGenerationStatus.GENERATING);
-            questionRepository.save(question);
+            questionRepository.saveAndFlush(question);
 
             log.info("🔍 Checking if TTS service is available...");
             if (!textToSpeechService.isAvailable()) {
                 log.warn("❌ Text-to-Speech service NOT available for question {}", question.getId());
                 question.setAudioGenerationStatus(Question.ContentGenerationStatus.PENDING);
                 question.setAudioGenerationError("TTS service not available. Check EdgeTTS/Google TTS configuration.");
-                questionRepository.save(question);
+                questionRepository.saveAndFlush(question);
                 return;
             }
 
@@ -89,7 +89,7 @@ public class AudioGenerationService {
             question.setAudioUrl(audioUrl);
             question.setAudioGenerationStatus(Question.ContentGenerationStatus.GENERATED);
             question.setAudioGenerationError(null);
-            questionRepository.save(question);
+            questionRepository.saveAndFlush(question);
 
             log.info("✅ Successfully generated audio for question {}: {}", question.getId(), audioUrl);
 
@@ -98,7 +98,7 @@ public class AudioGenerationService {
                 question.getId(), e.getMessage(), e.getCause(), e);
             question.setAudioGenerationStatus(Question.ContentGenerationStatus.FAILED);
             question.setAudioGenerationError(e.getMessage());
-            questionRepository.save(question);
+            questionRepository.saveAndFlush(question);
         }
     }
 
