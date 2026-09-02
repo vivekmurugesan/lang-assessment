@@ -61,15 +61,20 @@ public class QuestionGenerationService {
 
         log.info("Generated {} questions for assessment: {}", generatedQuestions.size(), assessment.getId());
 
-        // Trigger async audio generation for LISTENING questions
+        // Trigger async audio generation for LISTENING questions (only for questions that passed safety checks)
         log.info("🎵 Triggering ASYNC audio generation for LISTENING questions...");
-        long listeningCount = generatedQuestions.stream()
+        List<Question> listeningQuestions = generatedQuestions.stream()
             .filter(q -> q.getModuleType().toString().equals("LISTENING"))
-            .count();
-        log.info("🎵 Total LISTENING questions: {}", listeningCount);
+            .collect(Collectors.toList());
+        long listeningCount = listeningQuestions.size();
+        log.info("🎵 Total LISTENING questions (passed safety checks): {}", listeningCount);
 
-        audioGenerationService.generateAudioForQuestions(generatedQuestions);
-        log.info("🎵 Audio generation task submitted (async - will run in background)");
+        if (listeningCount > 0) {
+            audioGenerationService.generateAudioForQuestions(generatedQuestions);
+            log.info("🎵 Audio generation task submitted (async - will run in background) for {} listening questions", listeningCount);
+        } else {
+            log.warn("⚠️  No LISTENING questions passed safety checks, skipping audio generation");
+        }
 
         return generatedQuestions;
     }
@@ -147,7 +152,7 @@ public class QuestionGenerationService {
 
     private String getModuleSpecificGuidance(String moduleType) {
         return switch (moduleType) {
-            case "LISTENING" -> "- Each question should have ONLY the question text, NO instructions like 'Listen to the audio...'\n- Do NOT include words like 'Listen', 'Audio', 'Transcript' in the question text\n- The question should be clear and standalone without instruction preamble\n- Create 4 multiple-choice options (A, B, C, D)";
+            case "LISTENING" -> "- IMPORTANT: Include background context/conversation that will be in the audio\n- Format: Start with the conversation or context (2-3 sentences), then ask the question\n- Example: 'In a conversation at a cafe, Sarah asks Tom about his weekend plans. Tom explains he is going hiking on Saturday and visiting his family on Sunday. Question: What are Tom's plans for Saturday?'\n- Do NOT start with 'Listen to...' or 'You will hear...'\n- The full questionText should contain both context AND question\n- Create 4 multiple-choice options (A, B, C, D)";
             case "READING" -> "- Base questions on short text passages\n- Create 4 multiple-choice options (A, B, C, D)";
             case "WRITING" -> "- Provide writing prompts (NOT multiple-choice) that ask for open-ended text responses\n- Include context and word count guidance if appropriate\n- Mark type as 'essay', NOT 'multiple-choice'\n- Leave options array empty";
             case "SPOKEN_INTERACTION" -> "- Create realistic conversational scenarios where candidate responds to a prompt\n- NOT multiple-choice - candidate will record their response\n- Give clear context and what the candidate should do\n- Mark type as 'short-answer', NOT 'multiple-choice'\n- Leave options array empty";
@@ -402,8 +407,9 @@ public class QuestionGenerationService {
 
                 if (!safetyResult.isSafe) {
                     rejectedCount++;
-                    log.error("Question rejected due to safety violation: Category={}, Reason={}, FlaggedContent={}",
-                        safetyResult.category, safetyResult.reason, safetyResult.flaggedContent);
+                    log.warn("❌ SAFETY CHECK REJECTED - Question #{}: Category={}, Reason={}, Word='{}'",
+                        questionNumber, safetyResult.category, safetyResult.reason, safetyResult.flaggedContent);
+                    log.debug("  Full question text: {}", questionText);
                     continue;
                 }
 
