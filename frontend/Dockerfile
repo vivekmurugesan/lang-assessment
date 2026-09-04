@@ -3,6 +3,9 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
+# Accept build argument for API URL
+ARG REACT_APP_API_URL=http://localhost:8080/api
+
 # Copy package files
 COPY package*.json ./
 
@@ -14,8 +17,8 @@ COPY public ./public
 COPY src ./src
 COPY tailwind.config.js postcss.config.js ./
 
-# Build application
-RUN npm run build
+# Build application with API URL
+RUN REACT_APP_API_URL=$REACT_APP_API_URL npm run build
 
 # Runtime stage
 FROM node:18-alpine
