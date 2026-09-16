@@ -210,9 +210,10 @@ const AssessmentTaking = () => {
 
   if (loading) {
     return (
-      <div className="p-6">
-        <div className="text-center py-12">
-          <p className="text-gray-600">Loading assessment...</p>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="spinner mx-auto mb-4" />
+          <p className="text-gray-500">Loading assessment...</p>
         </div>
       </div>
     );
@@ -220,8 +221,8 @@ const AssessmentTaking = () => {
 
   if (!assessment) {
     return (
-      <div className="p-6">
-        <div className="card text-center py-12">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="card text-center py-12 max-w-md">
           <p className="text-gray-600">Assessment data not available</p>
         </div>
       </div>
@@ -230,8 +231,8 @@ const AssessmentTaking = () => {
 
   if (questions.length === 0) {
     return (
-      <div className="p-6">
-        <div className="card text-center py-12">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+        <div className="card text-center py-12 max-w-md">
           <h2 className="text-xl font-bold text-gray-800 mb-3">No Questions Available</h2>
           <p className="text-gray-600">
             This assessment has not been configured with any modules yet.
@@ -246,6 +247,16 @@ const AssessmentTaking = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Focus-mode top bar */}
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-30">
+        <div className="max-w-4xl mx-auto px-6 py-3 flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center text-white font-bold text-xs shrink-0">
+            LA
+          </div>
+          <span className="font-semibold text-gray-900 text-sm">Language Assessment</span>
+        </div>
+      </div>
+
       <div className="max-w-4xl mx-auto p-6">
         {/* Header */}
         <div className="mb-6">
@@ -257,11 +268,11 @@ const AssessmentTaking = () => {
         <div className="mb-6">
           <div className="flex justify-between text-sm text-gray-600 mb-2">
             <span>Progress</span>
-            <span>{Math.round(((currentQuestionIndex + 1) / questions.length) * 100)}%</span>
+            <span className="font-semibold text-indigo-600">{Math.round(((currentQuestionIndex + 1) / questions.length) * 100)}%</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
             <div
-              className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+              className="bg-gradient-to-r from-indigo-500 to-purple-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${((currentQuestionIndex + 1) / questions.length) * 100}%` }}
             />
           </div>
@@ -273,13 +284,13 @@ const AssessmentTaking = () => {
             <div className="card p-8">
               {/* Module Type Badge */}
               <div className="mb-4">
-                <span className="inline-block px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium">
-                  {currentQuestion?.moduleType}
+                <span className="badge bg-indigo-100 text-indigo-700">
+                  {currentQuestion?.moduleType?.replace(/_/g, ' ')}
                 </span>
               </div>
 
               {/* Question Text */}
-              <h2 className="text-2xl font-bold mb-6 text-gray-800">
+              <h2 className="text-xl sm:text-2xl font-bold mb-6 text-gray-900 leading-snug">
                 {currentQuestion?.questionText}
               </h2>
 
@@ -321,23 +332,30 @@ const AssessmentTaking = () => {
                     {questionOptions[currentQuestion?.id] ? (
                       <div className="space-y-3">
                         {Object.keys(questionOptions[currentQuestion?.id]).length > 0 ? (
-                          Object.entries(questionOptions[currentQuestion?.id]).map(([key, value]) => (
-                            <label key={key} className="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-indigo-500 transition"
-                              style={{
-                                borderColor: responses[currentQuestion?.id]?.option === key ? '#4F46E5' : '#D1D5DB'
-                              }}>
-                              <input
-                                type="radio"
-                                name={`question-${currentQuestion?.id}`}
-                                value={key}
-                                checked={responses[currentQuestion?.id]?.option === key}
-                                onChange={(e) => handleResponseChange(e.target.value, 'option')}
-                                className="mr-3"
-                              />
-                              <span className="font-medium mr-3">{key}.</span>
-                              <span>{value}</span>
-                            </label>
-                          ))
+                          Object.entries(questionOptions[currentQuestion?.id]).map(([key, value]) => {
+                            const selected = responses[currentQuestion?.id]?.option === key;
+                            return (
+                              <label
+                                key={key}
+                                className={`flex items-center p-4 border-2 rounded-xl cursor-pointer transition-colors ${
+                                  selected
+                                    ? 'border-indigo-600 bg-indigo-50'
+                                    : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50'
+                                }`}
+                              >
+                                <input
+                                  type="radio"
+                                  name={`question-${currentQuestion?.id}`}
+                                  value={key}
+                                  checked={selected}
+                                  onChange={(e) => handleResponseChange(e.target.value, 'option')}
+                                  className="mr-3 w-4 h-4 accent-indigo-600"
+                                />
+                                <span className={`font-semibold mr-3 ${selected ? 'text-indigo-700' : 'text-gray-500'}`}>{key}.</span>
+                                <span className="text-gray-800">{value}</span>
+                              </label>
+                            );
+                          })
                         ) : (
                           <div className="text-center py-6 bg-yellow-50 rounded-lg border border-yellow-200">
                             <p className="text-sm text-yellow-800">No options available for this question</p>
@@ -355,14 +373,14 @@ const AssessmentTaking = () => {
                 {/* Recording for Speaking */}
                 {['SPOKEN_INTERACTION', 'SPOKEN_PRODUCTION'].includes(currentQuestion?.moduleType) && (
                   <div className="space-y-4">
-                    <div className="p-6 bg-red-50 rounded-lg border border-red-200">
+                    <div className="p-6 bg-red-50 rounded-xl border border-red-100">
                       <div className="flex items-center justify-center">
                         <button
                           onClick={isRecording ? stopRecording : startRecording}
-                          className={`flex items-center gap-2 px-6 py-3 rounded-full font-semibold transition ${
+                          className={`flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-white shadow-soft transition-all ${
                             isRecording
-                              ? 'bg-red-600 hover:bg-red-700 text-white'
-                              : 'bg-red-500 hover:bg-red-600 text-white'
+                              ? 'bg-red-600 hover:bg-red-700 animate-pulse'
+                              : 'bg-red-500 hover:bg-red-600'
                           }`}
                         >
                           <FiMic size={20} />
@@ -392,7 +410,7 @@ const AssessmentTaking = () => {
                       value={responses[currentQuestion?.id]?.text || ''}
                       onChange={(e) => handleResponseChange(e.target.value, 'text')}
                       placeholder="Write your response here (minimum 150 words)..."
-                      className="form-input min-h-64 p-4 border-2 border-gray-300 rounded"
+                      className="form-input min-h-64 p-4"
                     />
                     <p className="text-xs text-gray-500 mt-2">
                       Word count: {(responses[currentQuestion?.id]?.text || '').split(/\s+/).filter(w => w).length}
@@ -404,7 +422,7 @@ const AssessmentTaking = () => {
               {/* Save Response Button */}
               <button
                 onClick={saveCurrentResponse}
-                className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                className="btn btn-secondary btn-sm"
               >
                 <FiSave size={16} />
                 Save Response
@@ -414,23 +432,23 @@ const AssessmentTaking = () => {
 
           {/* Sidebar - Question List */}
           <div className="lg:col-span-1">
-            <div className="card">
-              <h3 className="font-bold text-lg mb-4">Questions</h3>
-              <div className="space-y-2 max-h-96 overflow-y-auto">
+            <div className="card sticky top-20">
+              <h3 className="font-bold text-base mb-4 text-gray-900">Questions</h3>
+              <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
                 {questions.map((q, idx) => (
                   <button
                     key={q.id}
                     onClick={() => setCurrentQuestionIndex(idx)}
-                    className={`w-full p-3 text-left rounded transition ${
+                    className={`w-full p-3 text-left rounded-lg transition-colors ${
                       idx === currentQuestionIndex
-                        ? 'bg-indigo-600 text-white'
+                        ? 'bg-indigo-600 text-white shadow-soft'
                         : responses[q.id]
-                        ? 'bg-green-100 text-green-900 hover:bg-green-200'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-emerald-50 text-emerald-900 hover:bg-emerald-100'
+                        : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
                     }`}
                   >
-                    <div className="font-medium">Q{idx + 1}</div>
-                    <div className="text-xs opacity-75">{q.moduleType}</div>
+                    <div className="font-medium text-sm">Q{idx + 1}</div>
+                    <div className="text-xs opacity-75">{q.moduleType?.replace(/_/g, ' ')}</div>
                   </button>
                 ))}
               </div>
@@ -443,7 +461,7 @@ const AssessmentTaking = () => {
           <button
             onClick={handlePrevious}
             disabled={currentQuestionIndex === 0}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn btn-secondary"
           >
             <FiChevronLeft size={18} />
             Previous
@@ -453,7 +471,7 @@ const AssessmentTaking = () => {
             <button
               onClick={handleSubmit}
               disabled={submitting}
-              className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+              className="btn btn-success"
             >
               <FiSend size={18} />
               {submitting ? 'Submitting...' : 'Submit Assessment'}
@@ -461,7 +479,7 @@ const AssessmentTaking = () => {
           ) : (
             <button
               onClick={handleNext}
-              className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+              className="btn btn-primary"
             >
               Next
               <FiChevronRight size={18} />

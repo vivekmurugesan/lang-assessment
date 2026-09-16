@@ -26,9 +26,10 @@ const AssessmentResults = () => {
 
   if (loading) {
     return (
-      <div className="p-6">
-        <div className="text-center py-12">
-          <p className="text-gray-600">Loading your results...</p>
+      <div className="p-6 min-h-[60vh] flex items-center justify-center">
+        <div className="text-center">
+          <div className="spinner mx-auto mb-4" />
+          <p className="text-gray-500">Loading your results...</p>
         </div>
       </div>
     );
@@ -36,7 +37,7 @@ const AssessmentResults = () => {
 
   if (!results || results.message) {
     return (
-      <div className="p-6 min-h-screen flex items-center justify-center">
+      <div className="p-6 min-h-[60vh] flex items-center justify-center">
         <div className="card text-center py-12 max-w-md">
           <div className="mb-4 text-4xl">⏳</div>
           <p className="text-gray-800 font-semibold text-lg mb-2">Evaluation in Progress</p>
@@ -70,30 +71,29 @@ const AssessmentResults = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto p-6">
-        {/* Header */}
-        <div className="mb-6">
-          <button
-            onClick={() => navigate('/candidate')}
-            className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 mb-4"
-          >
-            <FiArrowLeft size={18} />
-            Back to Home
-          </button>
-          <h1 className="page-title">Assessment Results</h1>
-          <p className="page-subtitle">Your language proficiency assessment has been evaluated</p>
-        </div>
+    <div className="max-w-4xl mx-auto p-6">
+      {/* Header */}
+      <div className="mb-6">
+        <button
+          onClick={() => navigate('/candidate')}
+          className="flex items-center gap-2 text-indigo-600 hover:text-indigo-700 mb-4 text-sm font-medium"
+        >
+          <FiArrowLeft size={18} />
+          Back to Home
+        </button>
+        <h1 className="page-title">Assessment Results</h1>
+        <p className="page-subtitle">Your language proficiency assessment has been evaluated</p>
+      </div>
 
-        {/* CEFR Level Card */}
-        <div className={`card mb-6 p-8 text-center ${cefrLevelColor[results.cefrLevel] || 'bg-gray-100'}`}>
-          <p className="text-sm font-semibold mb-2">YOUR PROFICIENCY LEVEL</p>
-          <h2 className="text-6xl font-bold mb-2">{results.cefrLevel}</h2>
-          <p className="text-xl mb-4">{cefrLevelDescription[results.cefrLevel]}</p>
-          <p className="text-sm opacity-75">
-            Common European Framework of Reference for Languages
-          </p>
-        </div>
+      {/* CEFR Level Card */}
+      <div className={`card mb-6 p-8 text-center border-0 shadow-hover ${cefrLevelColor[results.cefrLevel] || 'bg-gray-100'}`}>
+        <p className="text-sm font-semibold mb-2 tracking-wide">YOUR PROFICIENCY LEVEL</p>
+        <h2 className="text-6xl font-bold mb-2">{results.cefrLevel}</h2>
+        <p className="text-xl mb-4">{cefrLevelDescription[results.cefrLevel]}</p>
+        <p className="text-sm opacity-75">
+          Common European Framework of Reference for Languages
+        </p>
+      </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           {/* Overall Score */}
@@ -173,22 +173,21 @@ const AssessmentResults = () => {
         )}
 
         {/* Actions */}
-        <div className="flex gap-4">
+        <div className="flex gap-3 flex-wrap">
           <button
             onClick={() => window.print()}
-            className="flex items-center gap-2 px-6 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+            className="btn btn-primary"
           >
             <FiDownload size={18} />
             Download Results
           </button>
           <button
             onClick={() => navigate('/candidate')}
-            className="flex items-center gap-2 px-6 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+            className="btn btn-secondary"
           >
             Back to Home
           </button>
         </div>
-      </div>
     </div>
   );
 };
