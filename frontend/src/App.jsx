@@ -25,6 +25,7 @@ import AssessmentResults from './pages/candidate/AssessmentResults';
 
 // Common Components
 import PrivateRoute from './components/PrivateRoute';
+import Layout from './components/Layout';
 import { useAuthStore } from './store/authStore';
 
 function App() {
@@ -47,16 +48,18 @@ function App() {
             path="/admin/*"
             element={
               <PrivateRoute role="ADMIN">
-                <Routes>
-                  <Route path="/" element={<AdminDashboard />} />
-                  <Route path="/catalog" element={<QuestionCatalog />} />
-                  <Route path="/assessments" element={<AssessmentSetup />} />
-                  <Route path="/questions/review/:assessmentId" element={<QuestionReview />} />
-                  <Route path="/onboarding" element={<CandidateOnboarding />} />
-                  <Route path="/monitoring" element={<AssessmentMonitoring />} />
-                  <Route path="/reports" element={<ReportingDashboard />} />
-                  <Route path="/evaluation" element={<EvaluationReview />} />
-                </Routes>
+                <Layout role="ADMIN">
+                  <Routes>
+                    <Route path="/" element={<AdminDashboard />} />
+                    <Route path="/catalog" element={<QuestionCatalog />} />
+                    <Route path="/assessments" element={<AssessmentSetup />} />
+                    <Route path="/questions/review/:assessmentId" element={<QuestionReview />} />
+                    <Route path="/onboarding" element={<CandidateOnboarding />} />
+                    <Route path="/monitoring" element={<AssessmentMonitoring />} />
+                    <Route path="/reports" element={<ReportingDashboard />} />
+                    <Route path="/evaluation" element={<EvaluationReview />} />
+                  </Routes>
+                </Layout>
               </PrivateRoute>
             }
           />
@@ -66,9 +69,11 @@ function App() {
             path="/candidate/*"
             element={
               <PrivateRoute role="CANDIDATE">
-                <Routes>
-                  <Route path="/" element={<CandidateHome />} />
-                </Routes>
+                <Layout role="CANDIDATE">
+                  <Routes>
+                    <Route path="/" element={<CandidateHome />} />
+                  </Routes>
+                </Layout>
               </PrivateRoute>
             }
           />
@@ -86,7 +91,9 @@ function App() {
             path="/assessment/:secureLink/results"
             element={
               <PrivateRoute role="CANDIDATE">
-                <AssessmentResults />
+                <Layout role="CANDIDATE">
+                  <AssessmentResults />
+                </Layout>
               </PrivateRoute>
             }
           />

@@ -29,15 +29,15 @@ const CandidateHome = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'INVITED':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 text-blue-700';
       case 'STARTED':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-amber-100 text-amber-700';
       case 'COMPLETED':
-        return 'bg-green-100 text-green-800';
+        return 'bg-emerald-100 text-emerald-700';
       case 'EVALUATED':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-purple-100 text-purple-700';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-700';
     }
   };
 
@@ -62,51 +62,32 @@ const CandidateHome = () => {
         <p className="page-subtitle">Your Language Assessment Portal</p>
       </div>
 
-      <div className="mb-6 flex gap-2">
-        <button
-          onClick={() => setFilter('all')}
-          className={`px-4 py-2 rounded font-medium transition ${
-            filter === 'all'
-              ? 'bg-indigo-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
-          All
-        </button>
-        <button
-          onClick={() => setFilter('pending')}
-          className={`px-4 py-2 rounded font-medium transition ${
-            filter === 'pending'
-              ? 'bg-indigo-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
-          Pending
-        </button>
-        <button
-          onClick={() => setFilter('active')}
-          className={`px-4 py-2 rounded font-medium transition ${
-            filter === 'active'
-              ? 'bg-indigo-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
-          In Progress
-        </button>
-        <button
-          onClick={() => setFilter('completed')}
-          className={`px-4 py-2 rounded font-medium transition ${
-            filter === 'completed'
-              ? 'bg-indigo-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-          }`}
-        >
-          Completed
-        </button>
+      <div className="mb-6 flex gap-2 flex-wrap">
+        {[
+          { key: 'all', label: 'All' },
+          { key: 'pending', label: 'Pending' },
+          { key: 'active', label: 'In Progress' },
+          { key: 'completed', label: 'Completed' },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setFilter(tab.key)}
+            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              filter === tab.key
+                ? 'bg-indigo-600 text-white shadow-soft'
+                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {loading ? (
-        <div className="text-center py-8 text-gray-600">Loading your assessments...</div>
+        <div className="text-center py-12 text-gray-500">
+          <div className="spinner mx-auto mb-3" />
+          Loading your assessments...
+        </div>
       ) : filteredAssessments.length === 0 ? (
         <div className="card text-center py-12">
           <p className="text-gray-600 text-lg mb-2">No assessments in this category</p>
@@ -121,7 +102,7 @@ const CandidateHome = () => {
                   <h3 className="font-bold text-lg mb-1">{assessment.title || 'Assessment'}</h3>
                   <p className="text-sm text-gray-600">{assessment.languageName}</p>
                 </div>
-                <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${getStatusColor(assessment.status)}`}>
+                <span className={`badge whitespace-nowrap ${getStatusColor(assessment.status)}`}>
                   {assessment.status}
                 </span>
               </div>
@@ -163,7 +144,7 @@ const CandidateHome = () => {
         </div>
       )}
 
-      <div className="mt-8 bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
+      <div className="mt-8 alert alert-info">
         <h4 className="font-semibold text-blue-900 mb-2">Assessment Tips</h4>
         <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
           <li>Make sure you have a stable internet connection</li>

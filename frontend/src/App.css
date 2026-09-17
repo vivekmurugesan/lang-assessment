@@ -70,15 +70,16 @@
 }
 
 .page-title {
-  font-size: 28px;
-  font-weight: 600;
-  color: #212529;
-  margin-bottom: 8px;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+  margin-bottom: 4px;
 }
 
 .page-subtitle {
   font-size: 14px;
-  color: #6c757d;
+  color: #64748b;
   margin-bottom: 20px;
 }
 
